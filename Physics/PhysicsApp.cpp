@@ -4,6 +4,8 @@
 #include "Input.h"
 #include "glm\ext.hpp"
 #include "Sphere.h"
+#include "Plane.h"
+#include "Box.h"
 #include <Gizmos.h>
 
 PhysicsApp::PhysicsApp() {
@@ -32,9 +34,7 @@ bool PhysicsApp::startup() {
 	// (To high may cause stutering)
 	m_physicsScene->SetTimeStep(0.01f);
 
-	Sphere* ball;
-	ball = new Sphere(glm::vec2(-40, 0), glm::vec2(10, 30), 3.f, 1, glm::vec4(1, 1, 1, 1));
-	m_physicsScene->AddActor(ball);
+	DrawRect();
 
 	return true;
 }
@@ -78,4 +78,31 @@ void PhysicsApp::draw() {
 
 	// done drawing sprites
 	m_2dRenderer->end();
+}
+
+void PhysicsApp::DrawRect()
+{
+	m_physicsScene->AddActor(new Sphere(glm::vec2(20, 0), glm::vec2(-10, -17), 1, 3, glm::vec4(1,1,0,1)));
+	m_physicsScene->AddActor(new Plane(glm::vec2(-0.65, 0.75), -25));
+
+	Box* box1 = new Box(glm::vec2(-20, 0), glm::vec2(16, -8), 1, 4, 8, 4, glm::vec4(1, 0, 0, 1));
+	m_physicsScene->AddActor(box1);
+	Box* box2 = new Box(glm::vec2(0, -20), glm::vec2(16, 0), 1, 4, 8, 4, glm::vec4(0, 1, 0, 1));
+	//box2->SetKinematic(true);
+	m_physicsScene->AddActor(box2);
+}
+
+void PhysicsApp::SphereAndPlane()
+{
+	Sphere* ball1;
+	ball1 = new Sphere(glm::vec2(-40, 20), glm::vec2(20, -20), 3.f, 5, glm::vec4(1, 1, 1, 1));
+	m_physicsScene->AddActor(ball1);
+
+	Sphere* ball2;
+	ball2 = new Sphere(glm::vec2(40, 20), glm::vec2(-20, -20), 3.f, 5, glm::vec4(1, 1, 1, 1));
+	m_physicsScene->AddActor(ball2);
+
+	//Plane* plane = new Plane(glm::vec2(0,1), 1);
+	Plane* plane = new Plane();
+	m_physicsScene->AddActor(plane);
 }
