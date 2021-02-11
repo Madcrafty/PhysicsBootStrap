@@ -82,7 +82,7 @@ void PhysicsApp::draw() {
 
 void PhysicsApp::DrawRect()
 {
-	m_physicsScene->AddActor(new Sphere(glm::vec2(20, 0), glm::vec2(-10, -17), 1, 3, glm::vec4(1,1,0,1)));
+	m_physicsScene->AddActor(new Sphere(glm::vec2(20, 0), glm::vec2(-20, -180), 1, 3, glm::vec4(1,1,0,1)));
 	m_physicsScene->AddActor(new Plane(glm::vec2(-0.65, 0.75), -25));
 
 	Box* box1 = new Box(glm::vec2(-20, 0), glm::vec2(16, -8), 1, 4, 8, 4, glm::vec4(1, 0, 0, 1));

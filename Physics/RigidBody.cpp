@@ -1,4 +1,8 @@
 #include "RigidBody.h"
+#include "PhysicsScene.h"
+
+#define MIN_LINEAR_THRESHOLD 0.001f;
+#define MIN_ANGULAR_THRESHOLD 0.001f;
 
 RigidBody::RigidBody(ShapeType a_shapeID, glm::vec2 a_position, glm::vec2 a_velocity, float a_mass, float a_rotation) : PhysicsObject(a_shapeID)
 {
@@ -7,10 +11,27 @@ RigidBody::RigidBody(ShapeType a_shapeID, glm::vec2 a_position, glm::vec2 a_velo
 	m_mass = a_mass;
 	m_rotation = a_rotation;
 	m_angularVelocity = 0;
+	m_isKinematic = false;
+	m_elasticity = 0.8f;
+	m_linearDrag = 0.3f;
+	m_angularDrag = 0.3f;
 }
 
 void RigidBody::FixedUpdate(glm::vec2 a_gravity, float a_timeStep)
 {
+	m_velocity -= m_velocity * m_linearDrag * a_timeStep;
+	m_angularVelocity -= m_angularVelocity * m_angularDrag * a_timeStep;
+
+	if (glm::length(m_velocity) < 0.001f)
+	{
+		m_velocity = glm::vec2(0);
+	}
+
+	if (abs(m_angularVelocity) < 0.001f)
+	{
+		m_angularVelocity = 0.f;
+	}
+
 	ApplyForce(a_gravity * GetMass() * a_timeStep , glm::vec2(0));
 	m_position += GetVelocity() * a_timeStep;
 
@@ -23,7 +44,7 @@ void RigidBody::ApplyForce(glm::vec2 a_force, glm::vec2 a_pos)
 	m_angularVelocity += (a_force.y * a_pos.x - a_force.x * a_pos.y) / GetMoment();
 }
 
-void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, glm::vec2* a_collisionNormal)
+void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, float a_pen, glm::vec2* a_collisionNormal)
 {
 	// Find the vector between their centers, or use the provided
 	// direction of force, and make sure it's mormalised
@@ -51,6 +72,10 @@ void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, g
 		glm::vec2 impact = (1.f + elasticity) * mass1 * mass2 / (mass1 + mass2) * (cp_velocity1 - cp_velocity2) * normal;
 		ApplyForce(-impact, a_contact - m_position);
 		a_otherActor->ApplyForce(impact, a_contact - a_otherActor->GetPosition());
+		if (a_pen > 0)
+		{
+			PhysicsScene::ApplyContactForces(this, a_otherActor, normal, a_pen);
+		}
 	}
 
 	//glm::vec2 relativeVelocity = a_otherActor->GetVelocity() - m_velocity;
