@@ -6,6 +6,7 @@
 
 enum ShapeType
 {
+	JOINT = -1,
 	PLANE = 0,
 	SPHERE,
 	BOX,
@@ -16,10 +17,11 @@ class PhysicsObject
 {
 public:
 	virtual void FixedUpdate(glm::vec2 a_gravity, float a_timeStep) = 0;
-	//virtual void Draw() = 0;
 	virtual void Debug() = 0;
 	virtual void MakeGizmo() = 0;
 	virtual void ResetPosition() {};
+
+	virtual bool IsInside(glm::vec2 a_point) = 0;
 
 	ShapeType GetShapeID() { return m_shapeID; }
 
@@ -27,7 +29,7 @@ public:
 	bool SetKinematic(bool a_isKinematic) { return m_isKinematic = a_isKinematic; }
 
 	float GetElasticity() { return m_elasticity; }
-	float SetElsaticity(float a_elasticity) { return m_elasticity = a_elasticity; }
+	float SetElasticity(float a_elasticity) { return m_elasticity = a_elasticity; }
 
 protected:
 	ShapeType m_shapeID;

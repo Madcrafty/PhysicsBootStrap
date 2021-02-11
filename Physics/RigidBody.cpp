@@ -1,5 +1,6 @@
 #include "RigidBody.h"
 #include "PhysicsScene.h"
+#include <iostream>
 
 #define MIN_LINEAR_THRESHOLD 0.001f;
 #define MIN_ANGULAR_THRESHOLD 0.001f;
@@ -12,6 +13,7 @@ RigidBody::RigidBody(ShapeType a_shapeID, glm::vec2 a_position, glm::vec2 a_velo
 	m_rotation = a_rotation;
 	m_angularVelocity = 0;
 	m_isKinematic = false;
+	m_isTrigger = false;
 	m_elasticity = 0.8f;
 	m_linearDrag = 0.3f;
 	m_angularDrag = 0.3f;
@@ -19,6 +21,29 @@ RigidBody::RigidBody(ShapeType a_shapeID, glm::vec2 a_position, glm::vec2 a_velo
 
 void RigidBody::FixedUpdate(glm::vec2 a_gravity, float a_timeStep)
 {
+	if (m_isTrigger)
+	{
+		// This will let us check every object that is inside a trigger
+		// object and call triggerEnter on if they haven't registered
+		// inside the trigger this frame, they must have exited so we can remove
+		// them from the list and then call triggerExit
+		for (auto it = m_objectInside.begin(); it != m_objectInside.end(); it++)
+		{
+			if (std::find(m_objectInsideThisFrame.begin(), m_objectInsideThisFrame.end(), *it) == m_objectInsideThisFrame.end())
+			{
+				if (triggerExit)
+				{
+					triggerExit(*it);
+				}
+				it = m_objectInside.erase(it);
+				if (it == m_objectInside.end())
+				{
+					break;
+				}
+			}
+		}
+	}
+	m_objectInsideThisFrame.clear();
 	if (m_isKinematic)
 	{
 		m_velocity = glm::vec2(0);
@@ -30,7 +55,10 @@ void RigidBody::FixedUpdate(glm::vec2 a_gravity, float a_timeStep)
 
 	if (glm::length(m_velocity) < 0.001f)
 	{
-		m_velocity = glm::vec2(0);
+		if (glm::length(m_velocity) < glm::length(a_gravity) * m_linearDrag * a_timeStep)
+		{
+			m_velocity = glm::vec2(0);
+		}
 	}
 
 	if (abs(m_angularVelocity) < 0.001f)
@@ -52,6 +80,8 @@ void RigidBody::ApplyForce(glm::vec2 a_force, glm::vec2 a_pos)
 
 void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, float a_pen, glm::vec2* a_collisionNormal)
 {
+	m_objectInsideThisFrame.push_back(a_otherActor);
+	a_otherActor->m_objectInsideThisFrame.push_back(this);
 	// Find the vector between their centers, or use the provided
 	// direction of force, and make sure it's mormalised
 	glm::vec2 normal = glm::normalize(a_collisionNormal ? *a_collisionNormal : a_otherActor->GetPosition() - GetPosition());
@@ -76,8 +106,25 @@ void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, f
 		float elasticity = (m_elasticity + a_otherActor->GetElasticity()) / 2.f;
 
 		glm::vec2 impact = (1.f + elasticity) * mass1 * mass2 / (mass1 + mass2) * (cp_velocity1 - cp_velocity2) * normal;
-		ApplyForce(-impact, a_contact - m_position);
-		a_otherActor->ApplyForce(impact, a_contact - a_otherActor->GetPosition());
+		if (!m_isTrigger && !a_otherActor->IsTrigger())
+		{
+			ApplyForce(-impact, a_contact - m_position);
+			a_otherActor->ApplyForce(impact, a_contact - a_otherActor->GetPosition());
+			if (m_collisionCallback != nullptr)
+			{
+				m_collisionCallback(a_otherActor);
+			}
+			if (a_otherActor->m_collisionCallback)
+			{
+				a_otherActor->m_collisionCallback(this);
+			}
+		}
+		else
+		{
+			TriggerEntered(a_otherActor);
+			a_otherActor->TriggerEntered(this);
+		}
+
 		if (a_pen > 0)
 		{
 			PhysicsScene::ApplyContactForces(this, a_otherActor, normal, a_pen);
@@ -90,4 +137,21 @@ void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, f
 	//float j = glm::dot(-(1 + elasticity) * (relativeVelocity), normal) / ((1 / m_mass) + (1 / a_otherActor->GetMass()));
 
 	//glm::vec2 impulse = normal * j;
+}
+
+glm::vec2 RigidBody::ToWorld(glm::vec2 a_localPos)
+{
+	return m_position + m_localX * a_localPos.x + m_localY * a_localPos;
+}
+
+void RigidBody::TriggerEntered(PhysicsObject* a_otherActor)
+{
+	if (m_isTrigger && std::find(m_objectInside.begin(), m_objectInside.end(), a_otherActor) == m_objectInside.end())
+	{
+		m_objectInside.push_back(a_otherActor);
+		if (triggerEnter != nullptr)
+		{
+			triggerEnter(a_otherActor);
+		}
+	}
 }

@@ -79,27 +79,39 @@ void PhysicsScene::Debug()
 void PhysicsScene::CheckForCollision()
 {
 	int actorCount = m_actors.size();
-	for (size_t outer = 0; outer < actorCount - 1; outer++)
+	for (int outer = 0; outer < actorCount - 1; outer++)
 	{
-		for (size_t inner = outer + 1; inner < actorCount; inner++)
+		for (int inner = outer + 1; inner < actorCount; inner++)
 		{
 			PhysicsObject* objOuter = m_actors[outer];
 			PhysicsObject* objInner = m_actors[inner];
 			int shapeID_out = objOuter->GetShapeID();
 			int shapeID_in = objInner->GetShapeID();
 
-			int functionIndex= (shapeID_out * SHAPE_COUNT) + shapeID_in;
-			fn collisionFunctionPtr = collisionFunctionArray[functionIndex];
-			if (collisionFunctionPtr != nullptr)
+			// This will check to ensure we do not include joints
+			if (shapeID_in >= 0 && shapeID_out >= 0)
 			{
-				collisionFunctionPtr(objOuter, objInner);
+				// Uses our function pointers (fn)
+				int functionIndex = (shapeID_out * SHAPE_COUNT) + shapeID_in;
+				fn collisionFunctionPtr = collisionFunctionArray[functionIndex];
+				if (collisionFunctionPtr != nullptr)
+				{
+					// Check if the collision occurs
+					collisionFunctionPtr(objOuter, objInner);
+				}
 			}
+
 		}
 	}
 }
 
 void PhysicsScene::ApplyContactForces(RigidBody* a_actor1, RigidBody* a_actor2, glm::vec2 a_collisionNormal, float a_pen)
 {
+	if ((a_actor1 && a_actor1->IsTrigger()) || (a_actor2 && a_actor2->IsTrigger()))
+	{
+		return;
+	}
+
 	float body2Mass = a_actor2 ? a_actor2->GetMass() : INT_MAX;
 	float body1Factor = body2Mass / (a_actor1->GetMass() + body2Mass);
 

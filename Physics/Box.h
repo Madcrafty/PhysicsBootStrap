@@ -10,6 +10,8 @@ public:
 	virtual void FixedUpdate(glm::vec2 a_gravity, float a_timestep);
 	virtual void MakeGizmo();
 
+	virtual bool IsInside(glm::vec2 a_point) {return false;}
+
 	bool CheckCorners(const Box& a_box, glm::vec2& a_contact, int& a_numContacts, float& a_pen, glm::vec2& a_edgeNormal);
 
 	float GetWidth() { return m_extents.x*2; }
@@ -22,9 +24,5 @@ public:
 protected:
 	glm::vec2 m_extents; // The half length of the box
 	glm::vec4 m_colour;
-
-	// These will store the local x and y axes of the box based on its angle of rotation
-	glm::vec2 m_localX;
-	glm::vec2 m_localY;
 };
 
