@@ -21,28 +21,30 @@ RigidBody::RigidBody(ShapeType a_shapeID, glm::vec2 a_position, glm::vec2 a_velo
 
 void RigidBody::FixedUpdate(glm::vec2 a_gravity, float a_timeStep)
 {
-	if (m_isTrigger)
+	// This will let us check every object that is inside a trigger
+	// object and call triggerEnter on if they haven't registered
+	// inside the trigger this frame, they must have exited so we can remove
+	// them from the list and then call triggerExit
+	for (auto it = m_objectInside.begin(); it != m_objectInside.end(); it++)
 	{
-		// This will let us check every object that is inside a trigger
-		// object and call triggerEnter on if they haven't registered
-		// inside the trigger this frame, they must have exited so we can remove
-		// them from the list and then call triggerExit
-		for (auto it = m_objectInside.begin(); it != m_objectInside.end(); it++)
+		if (std::find(m_objectInsideThisFrame.begin(), m_objectInsideThisFrame.end(), *it) == m_objectInsideThisFrame.end())
 		{
-			if (std::find(m_objectInsideThisFrame.begin(), m_objectInsideThisFrame.end(), *it) == m_objectInsideThisFrame.end())
+			if (m_isTrigger && triggerExit)
 			{
-				if (triggerExit)
-				{
-					triggerExit(*it);
-				}
-				it = m_objectInside.erase(it);
-				if (it == m_objectInside.end())
-				{
-					break;
-				}
+				triggerExit(*it);
+			}
+			if (!m_isTrigger && collisionExit)
+			{
+				triggerExit(*it);
+			}
+			it = m_objectInside.erase(it);
+			if (it == m_objectInside.end())
+			{
+				break;
 			}
 		}
 	}
+
 	m_objectInsideThisFrame.clear();
 	if (m_isKinematic)
 	{
@@ -100,16 +102,20 @@ void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, f
 	float cp_velocity2 = glm::dot(a_otherActor->GetVelocity(), normal) + radius2 * a_otherActor->m_angularVelocity;
 	if (cp_velocity1 > cp_velocity2) // They are moving closer...
 	{
-		float mass1 = 1.f / (1.f / m_mass + (radius1 * radius2) / GetMoment());
-		float mass2 = 1.f / (1.f / a_otherActor->m_mass + (radius1 * radius2) / a_otherActor->GetMoment());
+		float mass1 = 1.f / (1.f / GetMass() + (radius1 * radius2) / GetMoment());
+		float mass2 = 1.f / (1.f / a_otherActor->GetMass() + (radius1 * radius2) / a_otherActor->GetMoment());
 
 		float elasticity = (m_elasticity + a_otherActor->GetElasticity()) / 2.f;
 
 		glm::vec2 impact = (1.f + elasticity) * mass1 * mass2 / (mass1 + mass2) * (cp_velocity1 - cp_velocity2) * normal;
 		if (!m_isTrigger && !a_otherActor->IsTrigger())
 		{
+			// Forces
 			ApplyForce(-impact, a_contact - m_position);
 			a_otherActor->ApplyForce(impact, a_contact - a_otherActor->GetPosition());
+			// Collision Events
+			CollisionEntered(a_otherActor);
+			a_otherActor->CollisionEntered(this);
 			if (m_collisionCallback != nullptr)
 			{
 				m_collisionCallback(a_otherActor);
@@ -121,6 +127,8 @@ void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, f
 		}
 		else
 		{
+			TriggerStaying(a_otherActor);
+			a_otherActor->TriggerStaying(this);
 			TriggerEntered(a_otherActor);
 			a_otherActor->TriggerEntered(this);
 		}
@@ -152,6 +160,29 @@ void RigidBody::TriggerEntered(PhysicsObject* a_otherActor)
 		if (triggerEnter != nullptr)
 		{
 			triggerEnter(a_otherActor);
+		}
+	}
+}
+
+void RigidBody::TriggerStaying(PhysicsObject* a_otherActor)
+{
+	if (m_isTrigger && std::find(m_objectInside.begin(), m_objectInside.end(), a_otherActor) != m_objectInside.end())
+	{
+		if (triggerStay != nullptr)
+		{
+			triggerStay(a_otherActor);
+		}
+	}
+}
+
+void RigidBody::CollisionEntered(PhysicsObject* a_otherActor)
+{
+	if (!m_isTrigger && std::find(m_objectInside.begin(), m_objectInside.end(), a_otherActor) == m_objectInside.end())
+	{
+		m_objectInside.push_back(a_otherActor);
+		if (collisionEnter != nullptr)
+		{
+			collisionEnter(a_otherActor);
 		}
 	}
 }

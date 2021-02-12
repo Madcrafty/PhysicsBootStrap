@@ -29,6 +29,15 @@ public:
 	void SetTimeStep(const float a_timeStep) { m_timeStep = a_timeStep; }
 	float GetTimeStep() { return m_timeStep; }
 
+	void SetClub(RigidBody* a_Club) { m_Club = a_Club; }
+	RigidBody* GetClub() { return m_Club; }
+
+	void SetBall(RigidBody* a_Ball) { m_Ball = a_Ball; }
+	RigidBody* GetBall() { return m_Ball; }
+
+	void SetHitCount(int a_hitCount) { m_hitCount = a_hitCount; }
+	int GetHitCount() { return m_hitCount; }
+
 	void CheckForCollision();
 	static void ApplyContactForces(RigidBody* a_actor1, RigidBody* a_actor2, glm::vec2 a_collisionNormal, float a_pen);
 
@@ -47,6 +56,9 @@ public:
 protected:
 	glm::vec2 m_gravity;
 	float m_timeStep;
+	int m_hitCount = 0;
+	RigidBody* m_Club;
+	RigidBody* m_Ball;
 
 	std::vector<PhysicsObject*> m_actors;
 };

@@ -2,7 +2,7 @@
 #include "Box.h"
 
 Box::Box(glm::vec2 a_position, glm::vec2 a_velocity, float a_rotation, float a_mass, float a_width, float a_height)
-	: RigidBody(BOX, a_position, a_velocity, a_rotation, a_mass), m_extents(a_width/2,a_height/2)
+	: RigidBody(BOX, a_position, a_velocity, a_mass, a_rotation), m_extents(a_width/2,a_height/2)
 {
 	m_colour = glm::vec4(1, 0, 0, 1);
 	m_moment = 1.f / 3.f * m_mass * a_width * a_height;

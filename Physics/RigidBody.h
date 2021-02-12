@@ -25,16 +25,23 @@ public:
 	float GetAngularDrag() { return m_angularDrag; }
 
 	glm::vec2 SetPosition(glm::vec2 a_position) { return m_position = a_position; }
+	glm::vec2 SetVelocity(glm::vec2 a_velocity) { return m_velocity = a_velocity; }
 	float SetRotation(float a_rotation) { return m_rotation = a_rotation; }
-	float SetAngularVelocirt(float a_angularVelocity) { return m_angularVelocity = a_angularVelocity; }
+	float SetAngularVelocity(float a_angularVelocity) { return m_angularVelocity = a_angularVelocity; }
 
 	glm::vec2 ToWorld(glm::vec2 a_localPos);
 
 	std::function<void(PhysicsObject*)> m_collisionCallback;
 
 	void TriggerEntered(PhysicsObject* a_otherActor);
+	void TriggerStaying(PhysicsObject* a_otherActor);
 	std::function<void(PhysicsObject*)> triggerEnter;
+	std::function<void(PhysicsObject*)> triggerStay;
 	std::function<void(PhysicsObject*)> triggerExit;
+
+	void CollisionEntered(PhysicsObject* a_otherActor);
+	std::function<void(PhysicsObject*)> collisionEnter;
+	std::function<void(PhysicsObject*)> collisionExit;
 
 	bool IsTrigger() { return m_isTrigger; }
 	bool SetTrigger(bool a_state) { return m_isTrigger = a_state; }

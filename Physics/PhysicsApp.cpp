@@ -30,12 +30,12 @@ bool PhysicsApp::startup() {
 
 	m_physicsScene = new PhysicsScene();
 
-	m_physicsScene->SetGravity(glm::vec2(0, -10));
+	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	// Lower value, more accurate the simulation, but less speed.
 	// (To high may cause stutering)
 	m_physicsScene->SetTimeStep(0.01f);
 
-	TriggerTest();
+	Golf();
 
 	return true;
 }
@@ -50,20 +50,31 @@ void PhysicsApp::update(float deltaTime) {
 
 	// input example
 	aie::Input* input = aie::Input::getInstance();
-
 	aie::Gizmos::clear();
 
 	m_physicsScene->Update(deltaTime);
 	m_physicsScene->Draw();
 
+	// Mouse pos tracking
+	int xScreen, yScreen;
+	input->getMouseXY(&xScreen, &yScreen);
+	glm::vec2 mouseWorldPos = ScreenToWorld(glm::vec2(xScreen, yScreen));
+	m_mouseVelocity = (mouseWorldPos - m_previousMousePos) / deltaTime;
+
 	if (input->isMouseButtonDown(0))
 	{
-		int xScreen, yScreen;
-		input->getMouseXY(&xScreen, &yScreen);
-		glm::vec2 worldPos = ScreenToWorld(glm::vec2(xScreen, yScreen));
-		aie::Gizmos::add2DCircle(worldPos, 5, 32, glm::vec4(0.3));
+		aie::Gizmos::add2DCircle(mouseWorldPos, 5, 32, glm::vec4(0.3));
+		m_physicsScene->GetClub()->SetPosition(mouseWorldPos);
+		m_physicsScene->GetClub()->SetVelocity(m_mouseVelocity);
 	}
-
+	if (!input->isMouseButtonDown(0) && m_previousMouseState1)
+	{
+		m_physicsScene->GetClub()->SetPosition(mouseWorldPos);
+		m_physicsScene->GetClub()->SetVelocity(m_mouseVelocity);
+	}
+	// Updating previous mousePos;
+	m_previousMousePos = mouseWorldPos;
+	m_previousMouseState1 = input->isMouseButtonDown(0);
 	// exit the application
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
@@ -87,6 +98,11 @@ void PhysicsApp::draw() {
 	sprintf_s(fps, 32, "FPS: %i", getFPS());
 	m_2dRenderer->drawText(m_font, fps, 0, 720 - 32);
 
+	// Hit Counter
+	char hc[32];
+	sprintf_s(hc, 32, "Hit: %i", m_physicsScene->GetHitCount());
+	m_2dRenderer->drawText(m_font, hc, 1280 - 32*32, 720 - 32);
+
 	// output some text, uses the last used colour
 	m_2dRenderer->drawText(m_font, "Press ESC to quit", 0, 0);
 
@@ -109,10 +125,59 @@ glm::vec2 PhysicsApp::ScreenToWorld(glm::vec2 a_screenPos)
 	return worldPos;
 }
 
+void PhysicsApp::Golf()
+{
+	// Hole
+	Sphere* Hole = new Sphere(glm::vec2(50, 0), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
+	Hole->SetKinematic(true);
+	Hole->SetTrigger(true);
+	Hole->triggerEnter = [=](PhysicsObject* other) {
+		std::cout << "Hole Entered: " << other << std::endl;
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->GetBall()->ApplyForce((Hole->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+		}
+	};
+	Hole->triggerStay = [=](PhysicsObject* other) {
+		if (other == m_physicsScene->GetBall())
+		{
+			std::cout << "Hole Gravity " << std::endl;
+			if (glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f)
+			{
+				std::cout << "Your winner" << std::endl;
+				std::cout << "Hit Count: " << m_physicsScene->GetHitCount() << std::endl;
+			}
+			m_physicsScene->GetBall()->ApplyForce((Hole->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+		}
+	};
+	m_physicsScene->AddActor(Hole);
+	// Ball
+	Sphere* golfBall_main = new Sphere(glm::vec2(-50, 0), glm::vec2(0, 0), 4, 4, glm::vec4(1, 0, 0, 1));
+	golfBall_main->collisionEnter = [=](PhysicsObject* other) {
+		std::cout << "Ball Entered: " << other << std::endl;
+		if (other == m_physicsScene->GetClub())
+		{
+			m_physicsScene->SetHitCount(m_physicsScene->GetHitCount() + 1);
+		}
+	};
+	m_physicsScene->SetBall(golfBall_main);
+	m_physicsScene->AddActor(golfBall_main);
+	// Club
+	Box* golfClub = new Box(glm::vec2(0, 0), glm::vec2(0, 0), 1, 4, 8, 4, glm::vec4(1, 0, 0, 1));
+	m_physicsScene->SetClub(golfClub);
+	m_physicsScene->AddActor(golfClub);
+	
+	// Border
+	m_physicsScene->AddActor(new Plane(glm::vec2(0, 1), -50));
+	m_physicsScene->AddActor(new Plane(glm::vec2(1, 0), -90));
+	m_physicsScene->AddActor(new Plane(glm::vec2(0, -1), -50));
+	m_physicsScene->AddActor(new Plane(glm::vec2(-1, 0), -90));
+}
+
 void PhysicsApp::TriggerTest()
 {
-	Sphere* ball1 = new Sphere(glm::vec2(-20, 0), glm::vec2(20, 0), 4, 4, glm::vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(glm::vec2(10, -20), glm::vec2(0), 4, 4, glm::vec4(0, 1, 0, 1));
+	Sphere* ball1 = new Sphere(glm::vec2(0, 0), glm::vec2(20, 0), 4, 4, glm::vec4(1, 0, 0, 1));
+	Sphere* ball2 = new Sphere(glm::vec2(10, -0), glm::vec2(0), 4, 4, glm::vec4(0, 1, 0, 1));
 	ball2->SetKinematic(true);
 	ball2->SetTrigger(true);
 
