@@ -35,7 +35,7 @@ bool PhysicsApp::startup() {
 	// (To high may cause stutering)
 	m_physicsScene->SetTimeStep(0.01f);
 
-	Golf();
+	ComboGolf();
 
 	return true;
 }
@@ -64,6 +64,8 @@ void PhysicsApp::update(float deltaTime) {
 	if (input->isMouseButtonDown(0))
 	{
 		aie::Gizmos::add2DCircle(mouseWorldPos, 5, 32, glm::vec4(0.3));
+		m_physicsScene->SetHitCount(0);
+		m_physicsScene->SetHoleCount(0);
 		m_physicsScene->GetClub()->SetPosition(mouseWorldPos);
 		m_physicsScene->GetClub()->SetVelocity(m_mouseVelocity);
 	}
@@ -96,12 +98,17 @@ void PhysicsApp::draw() {
 	// FPS: Counter
 	char fps[32];
 	sprintf_s(fps, 32, "FPS: %i", getFPS());
-	m_2dRenderer->drawText(m_font, fps, 0, 720 - 32);
+	m_2dRenderer->drawText(m_font, fps, 0, aie::Application::getWindowHeight() - 32);
 
 	// Hit Counter
 	char hc[32];
 	sprintf_s(hc, 32, "Hit: %i", m_physicsScene->GetHitCount());
-	m_2dRenderer->drawText(m_font, hc, 1280 - 32*32, 720 - 32);
+	m_2dRenderer->drawText(m_font, hc, 1280 - 32*32, aie::Application::getWindowHeight() - 32);
+
+	// Hole Counter
+	char Hc[32];
+	sprintf_s(Hc, 32, "Hole: %i", m_physicsScene->GetHoleCount());
+	m_2dRenderer->drawText(m_font, Hc, 1280 - 32 * 24, aie::Application::getWindowHeight() - 32);
 
 	// output some text, uses the last used colour
 	m_2dRenderer->drawText(m_font, "Press ESC to quit", 0, 0);
@@ -125,32 +132,192 @@ glm::vec2 PhysicsApp::ScreenToWorld(glm::vec2 a_screenPos)
 	return worldPos;
 }
 
-void PhysicsApp::Golf()
+//void PhysicsApp::Golf()
+//{
+//	// Hole
+//	Sphere* Hole = new Sphere(glm::vec2(50, 0), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
+//	Hole->SetKinematic(true);
+//	Hole->SetTrigger(true);
+//	Hole->triggerEnter = [=](PhysicsObject* other) {
+//		std::cout << "Hole Entered: " << other << std::endl;
+//		if (other == m_physicsScene->GetBall())
+//		{
+//			m_physicsScene->GetBall()->ApplyForce((Hole->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+//		}
+//	};
+//	Hole->triggerStay = [=](PhysicsObject* other) {
+//		if (other == m_physicsScene->GetBall())
+//		{
+//			std::cout << "Hole Gravity " << std::endl;
+//			if (glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f)
+//			{
+//				std::cout << "Your winner" << std::endl;
+//				std::cout << "Hit Count: " << m_physicsScene->GetHitCount() << std::endl;
+//			}
+//			m_physicsScene->GetBall()->ApplyForce((Hole->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+//		}
+//	};
+//	m_physicsScene->AddActor(Hole);
+//	// Ball
+//	Sphere* golfBall_main = new Sphere(glm::vec2(-50, 0), glm::vec2(0, 0), 4, 4, glm::vec4(1, 0, 0, 1));
+//	golfBall_main->collisionEnter = [=](PhysicsObject* other) {
+//		std::cout << "Ball Entered: " << other << std::endl;
+//		if (other == m_physicsScene->GetClub())
+//		{
+//			m_physicsScene->SetHitCount(m_physicsScene->GetHitCount() + 1);
+//		}
+//	};
+//	m_physicsScene->SetBall(golfBall_main);
+//	m_physicsScene->AddActor(golfBall_main);
+//	// Club
+//	Box* golfClub = new Box(glm::vec2(0, 0), glm::vec2(0, 0), 1, 4, 8, 4, glm::vec4(1, 0, 0, 1));
+//	m_physicsScene->SetClub(golfClub);
+//	m_physicsScene->AddActor(golfClub);
+//
+//	// Border
+//	m_physicsScene->AddActor(new Plane(glm::vec2(0, 1), -50));
+//	m_physicsScene->AddActor(new Plane(glm::vec2(1, 0), -90));
+//	m_physicsScene->AddActor(new Plane(glm::vec2(0, -1), -50));
+//	m_physicsScene->AddActor(new Plane(glm::vec2(-1, 0), -90));
+//}
+void PhysicsApp::ComboGolf()
 {
-	// Hole
-	Sphere* Hole = new Sphere(glm::vec2(50, 0), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
-	Hole->SetKinematic(true);
-	Hole->SetTrigger(true);
-	Hole->triggerEnter = [=](PhysicsObject* other) {
+	// Hole1
+	Sphere* Hole1 = new Sphere(glm::vec2(-30, -30), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
+	Hole1->SetKinematic(true);
+	Hole1->SetTrigger(true);
+	Hole1->triggerEnter = [=](PhysicsObject* other) {
 		std::cout << "Hole Entered: " << other << std::endl;
 		if (other == m_physicsScene->GetBall())
 		{
-			m_physicsScene->GetBall()->ApplyForce((Hole->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+			m_physicsScene->GetBall()->ApplyForce((Hole1->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole1->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
 		}
 	};
-	Hole->triggerStay = [=](PhysicsObject* other) {
+	Hole1->triggerStay = [=](PhysicsObject* other) {
 		if (other == m_physicsScene->GetBall())
 		{
-			std::cout << "Hole Gravity " << std::endl;
-			if (glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f)
+			if (glm::distance(Hole1->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f && !m_physicsScene->GetBallInHole())
 			{
-				std::cout << "Your winner" << std::endl;
-				std::cout << "Hit Count: " << m_physicsScene->GetHitCount() << std::endl;
+				std::cout << "Hole sunk!!" << std::endl;
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetBallInHole(true);
 			}
-			m_physicsScene->GetBall()->ApplyForce((Hole->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+			glm::vec2 Force = glm::vec2((Hole1->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole1->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
+			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
 		}
 	};
-	m_physicsScene->AddActor(Hole);
+	Hole1->triggerExit = [=](PhysicsObject* other)
+	{
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->SetBallInHole(false);
+		}
+	};
+	m_physicsScene->AddActor(Hole1);
+	// Hole2
+	Sphere* Hole2 = new Sphere(glm::vec2(30, -30), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
+	Hole2->SetKinematic(true);
+	Hole2->SetTrigger(true);
+	Hole2->triggerEnter = [=](PhysicsObject* other) {
+		std::cout << "Hole Entered: " << other << std::endl;
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->GetBall()->ApplyForce((Hole2->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole2->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+		}
+	};
+	Hole2->triggerStay = [=](PhysicsObject* other) {
+		if (other == m_physicsScene->GetBall())
+		{
+			if (glm::distance(Hole2->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f && !m_physicsScene->GetBallInHole())
+			{
+				std::cout << "Hole sunk!!" << std::endl;
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetBallInHole(true);
+			}
+			glm::vec2 Force = glm::vec2((Hole2->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole2->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
+			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
+		}
+	};
+	Hole2->triggerExit = [=](PhysicsObject* other)
+	{
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->SetBallInHole(false);
+		}
+	};
+	m_physicsScene->AddActor(Hole2);
+	// Hole3
+	Sphere* Hole3 = new Sphere(glm::vec2(30, 30), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
+	Hole3->SetKinematic(true);
+	Hole3->SetTrigger(true);
+	Hole3->triggerEnter = [=](PhysicsObject* other) {
+		std::cout << "Hole Entered: " << other << std::endl;
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->GetBall()->ApplyForce((Hole3->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole3->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+		}
+	};
+	Hole3->triggerStay = [=](PhysicsObject* other) {
+		if (other == m_physicsScene->GetBall())
+		{
+			if (glm::distance(Hole3->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f && !m_physicsScene->GetBallInHole())
+			{
+				std::cout << "Hole sunk!!" << std::endl;
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetBallInHole(true);
+			}
+			glm::vec2 Force = glm::vec2((Hole3->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole3->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
+			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
+		}
+	};
+	Hole3->triggerExit = [=](PhysicsObject* other)
+	{
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->SetBallInHole(false);
+		}
+	};
+	m_physicsScene->AddActor(Hole3);
+	// Hole4
+	Sphere* Hole4 = new Sphere(glm::vec2(-30, 30), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
+	Hole4->SetKinematic(true);
+	Hole4->SetTrigger(true);
+	Hole4->triggerEnter = [=](PhysicsObject* other) {
+		std::cout << "Hole Entered: " << other << std::endl;
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->GetBall()->ApplyForce((Hole4->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole4->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
+		}
+	};
+	Hole4->triggerStay = [=](PhysicsObject* other) {
+		if (other == m_physicsScene->GetBall())
+		{
+			if (glm::distance(Hole4->GetPosition(), m_physicsScene->GetBall()->GetPosition()) < 4.f && !m_physicsScene->GetBallInHole())
+			{
+				std::cout << "Hole sunk!!" << std::endl;
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetBallInHole(true);
+			}
+			glm::vec2 Force = glm::vec2((Hole4->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole4->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
+			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
+		}
+	};
+	Hole4->triggerExit = [=](PhysicsObject* other)
+	{
+		if (other == m_physicsScene->GetBall())
+		{
+			m_physicsScene->SetBallInHole(false);
+		}
+	};
+	m_physicsScene->AddActor(Hole4);
 	// Ball
 	Sphere* golfBall_main = new Sphere(glm::vec2(-50, 0), glm::vec2(0, 0), 4, 4, glm::vec4(1, 0, 0, 1));
 	golfBall_main->collisionEnter = [=](PhysicsObject* other) {

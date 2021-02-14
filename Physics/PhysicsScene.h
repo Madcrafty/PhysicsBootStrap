@@ -38,6 +38,12 @@ public:
 	void SetHitCount(int a_hitCount) { m_hitCount = a_hitCount; }
 	int GetHitCount() { return m_hitCount; }
 
+	void SetHoleCount(int a_holeCount) { m_holeCount = a_holeCount; }
+	int GetHoleCount() { return m_holeCount; }
+
+	void SetBallInHole(bool a_state) { m_inHole = a_state; }
+	bool GetBallInHole() { return m_inHole; }
+
 	void CheckForCollision();
 	static void ApplyContactForces(RigidBody* a_actor1, RigidBody* a_actor2, glm::vec2 a_collisionNormal, float a_pen);
 
@@ -59,6 +65,9 @@ protected:
 	int m_hitCount = 0;
 	RigidBody* m_Club;
 	RigidBody* m_Ball;
+	float m_holePullMuli = 5.f;
+	int m_holeCount = 0;
+	bool m_inHole = false;
 
 	std::vector<PhysicsObject*> m_actors;
 };

@@ -34,7 +34,8 @@ protected:
 	glm::vec2 m_mouseVelocity = glm::vec2(0,0);
 
 public: // Scenes
-	void Golf();
+	void ComboGolf();
+	// void Gold();
 	// Test Scenes
 	void TriggerTest();
 	void DrawRect();
