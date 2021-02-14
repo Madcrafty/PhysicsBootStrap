@@ -1,3 +1,11 @@
+# PhysicsBootStrap: Combo Golf
+Release Build: temp\Physics\x64\Release
+
+Bugs:
+- Hud is not functional in build but in pproject it is fine
+- Ball doesnt rotate
+- Club (red box) bounces perfecly horizontally sometimes (its not bad but it is jank)
+
 # aieBootstrap
 
 *NOTE: This project is no longer being actively maintained*
