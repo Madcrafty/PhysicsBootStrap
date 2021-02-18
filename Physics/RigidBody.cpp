@@ -72,12 +72,28 @@ void RigidBody::FixedUpdate(glm::vec2 a_gravity, float a_timeStep)
 	m_position += GetVelocity() * a_timeStep;
 
 	m_rotation += m_angularVelocity * a_timeStep;
+	if (m_rotation > 3.141592f * 2)
+	{
+		m_rotation -= 3.141592f * 2;
+	}
+	if (m_rotation < 0)
+	{
+		m_rotation += 3.141592f * 2;
+	}
 }
 
 void RigidBody::ApplyForce(glm::vec2 a_force, glm::vec2 a_pos)
 {
 	m_velocity += a_force / GetMass();
-	m_angularVelocity += (a_force.y * a_pos.x - a_force.x * a_pos.y) / GetMoment();
+	if (m_shapeID == SPHERE)
+	{
+		m_angularVelocity += (a_force.y * a_pos.x + a_force.x * a_pos.y) / GetMoment();
+	}
+	else
+	{
+		m_angularVelocity += (a_force.y * a_pos.x - a_force.x * a_pos.y) / GetMoment();
+	}
+	
 }
 
 void RigidBody::ResolveCollision(RigidBody* a_otherActor, glm::vec2 a_contact, float a_pen, glm::vec2* a_collisionNormal)

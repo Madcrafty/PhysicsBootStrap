@@ -44,6 +44,15 @@ public:
 	void SetBallInHole(bool a_state) { m_inHole = a_state; }
 	bool GetBallInHole() { return m_inHole; }
 
+	void SetScore(int a_score) { m_score = a_score; }
+	int GetScore() { return m_score; }
+
+	void SetHighScore(int a_highscore) { m_highscore = a_highscore; }
+	int GetHighScore() { return m_highscore; }
+
+	void SetSessionHighScore(int a_sessionHighscore) { m_sessionHighscore = a_sessionHighscore; }
+	int GetSessionHighScore() { return m_sessionHighscore; }
+
 	void CheckForCollision();
 	static void ApplyContactForces(RigidBody* a_actor1, RigidBody* a_actor2, glm::vec2 a_collisionNormal, float a_pen);
 
@@ -67,6 +76,9 @@ protected:
 	RigidBody* m_Ball;
 	float m_holePullMuli = 5.f;
 	int m_holeCount = 0;
+	int m_score = 0;
+	int m_highscore = 0;
+	int m_sessionHighscore = 0;
 	bool m_inHole = false;
 
 	std::vector<PhysicsObject*> m_actors;

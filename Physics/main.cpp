@@ -6,8 +6,8 @@ int main() {
 	auto app = new PhysicsApp();
 
 	// initialise and loop
-	app->run("AIE", 1280, 720, false);
-
+	app->setVSync(false);
+	app->run("DIE BY THE PUTTER", 1280, 720, false);
 	// deallocation
 	delete app;
 
