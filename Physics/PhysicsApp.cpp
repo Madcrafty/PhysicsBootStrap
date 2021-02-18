@@ -36,7 +36,7 @@ bool PhysicsApp::startup() {
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	// Lower value, more accurate the simulation, but less speed.
 	// (To high may cause stutering)
-	m_physicsScene->SetTimeStep(0.01f);
+	m_physicsScene->SetTimeStep(0.005f);
 	
 	// Load Highscore
 	std::fstream hfile("./thehighscore.txt", std::ios_base::in);
@@ -264,7 +264,7 @@ void PhysicsApp::ComboGolf()
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole1->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole1->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
-			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity() * m_physicsScene->GetTimeStep() * 100.f);
 			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
 			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
 		}
@@ -315,7 +315,7 @@ void PhysicsApp::ComboGolf()
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole2->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole2->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
-			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity() * m_physicsScene->GetTimeStep() * 100.f);
 			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
 			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
 		}
@@ -366,7 +366,7 @@ void PhysicsApp::ComboGolf()
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole3->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole3->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
-			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity() * m_physicsScene->GetTimeStep() * 100.f);
 			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
 			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
 		}
@@ -417,7 +417,7 @@ void PhysicsApp::ComboGolf()
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole4->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole4->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
-			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity());
+			Force *= glm::length(m_physicsScene->GetBall()->GetVelocity() * m_physicsScene->GetTimeStep() * 100.f);
 			m_physicsScene->GetBall()->ApplyForce(Force, glm::vec2(0));
 			std::cout << "Hole Gravity| x: " << Force.x << " y: " << Force.y << std::endl;
 		}
