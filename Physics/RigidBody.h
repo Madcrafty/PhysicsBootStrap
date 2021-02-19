@@ -64,7 +64,7 @@ protected:
 	float m_angularDrag;
 
 	// These will store the local x and y axes of the box based on its angle of rotation
-	glm::vec2 m_localX;
+	glm::vec2 m_localX ;
 	glm::vec2 m_localY;
 };
 

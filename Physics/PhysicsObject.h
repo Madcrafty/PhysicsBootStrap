@@ -33,8 +33,8 @@ public:
 
 protected:
 	ShapeType m_shapeID;
-	bool m_isKinematic;
-	float m_elasticity;
+	bool m_isKinematic = false;
+	float m_elasticity = 1;
 	PhysicsObject(ShapeType a_shapeID) : m_shapeID(a_shapeID) {};
 };
 

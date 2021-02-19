@@ -35,7 +35,7 @@ protected:
 
 public: // Scenes
 	void ComboGolf();
-	// void Gold();
+	// void Golf();
 	// Test Scenes
 	void TriggerTest();
 	void DrawRect();

@@ -30,10 +30,9 @@ bool PhysicsApp::startup() {
 	// TODO: remember to change this when redistributing a build!
 	// the following path would be used instead: "./font/consolas.ttf"
 	m_font = new aie::Font("./font/consolas.ttf", 32);
-
 	m_physicsScene = new PhysicsScene();
-
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
+
 	// Lower value, more accurate the simulation, but less speed.
 	// (To high may cause stutering)
 	m_physicsScene->SetTimeStep(0.005f);
