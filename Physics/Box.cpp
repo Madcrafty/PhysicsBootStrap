@@ -57,7 +57,7 @@ bool Box::CheckCorners(const Box& a_box, glm::vec2& a_contact, int& a_numContact
 			// Get the position in world space
 			glm::vec2 p = a_box.GetPosition() + x * a_box.m_localX + y * a_box.m_localY;
 
-			// Get tje position in our box's space
+			// Get the position in our box's space
 			glm::vec2 p0 (glm::dot(p - m_position, m_localX),
 						  glm::dot(p - m_position, m_localY));
 			// Updating the extents in each cardinal direction of our box's space

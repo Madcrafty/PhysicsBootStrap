@@ -7,6 +7,7 @@
 
 #include <list>
 #include <iostream>
+#include <vector>
 
 
 typedef bool (*fn)(PhysicsObject*, PhysicsObject*);
@@ -145,6 +146,7 @@ bool PhysicsScene::Plane2Box(PhysicsObject* objPlane, PhysicsObject* objBox)
 	}
 
 	int numContacts = 0;
+	//std::vector<glm::vec2> contacts;
 	glm::vec2 contact(0, 0);
 	float contactV = 0;
 	
@@ -171,6 +173,7 @@ bool PhysicsScene::Plane2Box(PhysicsObject* objPlane, PhysicsObject* objBox)
 			{
 				numContacts++;
 				contact += p;
+				//contacts.push_back(p);
 				contactV += velocityIntoPlane;
 			}
 		}
@@ -180,6 +183,15 @@ bool PhysicsScene::Plane2Box(PhysicsObject* objPlane, PhysicsObject* objBox)
 		plane->ResolveCollision(box, contact / (float)numContacts);
 		return true;
 	}
+	//for (size_t i = 0; i < contacts.size(); i++)
+	//{
+	//	plane->ResolveCollision(box, contacts[i]);
+	//	
+	//}
+	//if (numContacts > 0)
+	//{
+	//	return true;
+	//}
 	return false;
 }
 
@@ -244,8 +256,8 @@ bool PhysicsScene::Sphere2Box(PhysicsObject* objSphere, PhysicsObject* objBox)
 	glm::vec2 circlePosWorld = sphere->GetPosition() - box->GetPosition();
 	glm::vec2 circlePosBox = glm::vec2(glm::dot(circlePosWorld, box->GetLocalX()), glm::dot(circlePosWorld, box->GetLocalY()));
 
-	// Find the closest point to the circle's center on the box
-	// by clmaping the coordinates in the vox-space to the box's extents
+	// Find the closest point to the circle's centre on the box
+	// by clamping the coordinates in the box-space to the box's extents
 
 	glm::vec2 closestPointOnTheBox = circlePosBox;
 	glm::vec2 extent = box->GetExtents();
