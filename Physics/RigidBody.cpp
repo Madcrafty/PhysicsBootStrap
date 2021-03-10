@@ -62,6 +62,11 @@ void RigidBody::FixedUpdate(glm::vec2 a_gravity, float a_timeStep)
 			m_velocity = glm::vec2(0);
 		}
 	}
+	// Speed limiter : only for assessment purposes
+	if (glm::length(m_velocity) > 400.f)
+	{
+		m_velocity = glm::normalize(m_velocity) * 400.f;
+	}
 
 	if (abs(m_angularVelocity) < 0.001f)
 	{

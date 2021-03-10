@@ -29,6 +29,7 @@ bool PhysicsApp::startup() {
 
 	// TODO: remember to change this when redistributing a build!
 	// the following path would be used instead: "./font/consolas.ttf"
+	//m_font = new aie::Font("../bin/font/consolas.ttf", 32);
 	m_font = new aie::Font("./font/consolas.ttf", 32);
 	m_physicsScene = new PhysicsScene();
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
@@ -81,7 +82,7 @@ void PhysicsApp::update(float deltaTime) {
 
 	if (input->isMouseButtonDown(0))
 	{
-		aie::Gizmos::add2DCircle(mouseWorldPos, 5, 32, glm::vec4(0.3));
+		aie::Gizmos::add2DCircle(mouseWorldPos, 5.f, 32, glm::vec4(0.3f));
 		m_physicsScene->SetHitCount(0);
 		m_physicsScene->SetHoleCount(0);
 		m_physicsScene->SetScore(0);
@@ -117,38 +118,46 @@ void PhysicsApp::draw() {
 	// FPS: Counter
 	char fps[32];
 	sprintf_s(fps, 32, "FPS: %i", getFPS());
-	m_2dRenderer->drawText(m_font, fps, aie::Application::getWindowWidth() - 32*6, aie::Application::getWindowHeight() - 32);
+	m_2dRenderer->drawText(m_font, fps, aie::Application::getWindowWidth() - 32.f*6.f, aie::Application::getWindowHeight() - 32.f);
 
 	// Hit Counter
 	char hc[32];
 	sprintf_s(hc, 32, "Hit: %i", m_physicsScene->GetHitCount());
-	m_2dRenderer->drawText(m_font, hc, 0, aie::Application::getWindowHeight() - 32);
+	m_2dRenderer->drawText(m_font, hc, 0.f, aie::Application::getWindowHeight() - 32.f);
 
 	// Hole Counter
 	char Hc[32];
 	sprintf_s(Hc, 32, "Hole: %i", m_physicsScene->GetHoleCount());
-	m_2dRenderer->drawText(m_font, Hc,32 * 4.5f, aie::Application::getWindowHeight() - 32);
+	m_2dRenderer->drawText(m_font, Hc,32.f * 4.5f, aie::Application::getWindowHeight() - 32.f);
 
 	// Score
 	char S[32];
 	sprintf_s(S, 32, "Score: %i", m_physicsScene->GetScore());
-	m_2dRenderer->drawText(m_font, S, 32 * 9.5f, aie::Application::getWindowHeight() - 32);
+	m_2dRenderer->drawText(m_font, S, 32.f * 9.5f, aie::Application::getWindowHeight() - 32.f);
 
 	// Highscore
 	char HS[32];
 	sprintf_s(HS, 32, "Highscore: %i", m_physicsScene->GetHighScore());
-	m_2dRenderer->drawText(m_font, HS, aie::Application::getWindowWidth() - 32 * 12,0);
+	m_2dRenderer->drawText(m_font, HS, aie::Application::getWindowWidth() - 32.f * 12.f,0.f);
 
 	// Session Best
 	char SB[32];
 	sprintf_s(SB, 32, "Session Best: %i", m_physicsScene->GetSessionHighScore());
-	m_2dRenderer->drawText(m_font, SB, aie::Application::getWindowWidth() - 32 * 24, 0);
+	m_2dRenderer->drawText(m_font, SB, aie::Application::getWindowWidth() - 32.f * 24.f, 0.f);
 
 	// Ball Speed
 	if (glm::length(m_physicsScene->GetBall()->GetVelocity()) > 50.f)
 	{
 		char Bs[32];
-		sprintf_s(Bs, 32, "Ball Speed: %f", glm::length(m_physicsScene->GetBall()->GetVelocity()));
+		// Only for assessment purposes
+		if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 395.f)
+		{
+			sprintf_s(Bs, 32, "Ball Speed: %f", glm::length(m_physicsScene->GetBall()->GetVelocity()));
+		}
+		else
+		{
+			sprintf_s(Bs, 32, "Ball Speed: !!!MAX!!!");
+		}
 		m_2dRenderer->drawText(m_font, Bs, 32 * 18, aie::Application::getWindowHeight() - 32);
 	}
 	
@@ -225,6 +234,7 @@ glm::vec2 PhysicsApp::ScreenToWorld(glm::vec2 a_screenPos)
 //}
 void PhysicsApp::ComboGolf()
 {
+	float holeEntrySpeed;
 	// Hole1
 	Sphere* Hole1 = new Sphere(glm::vec2(-30, -30), glm::vec2(0, 0), 4, 4, glm::vec4(0.3f, 0.3f, 0.3f, 1));
 	Hole1->SetKinematic(true);
@@ -233,6 +243,12 @@ void PhysicsApp::ComboGolf()
 		std::cout << "Hole Entered: " << other << std::endl;
 		if (other == m_physicsScene->GetBall())
 		{
+			if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f && !m_physicsScene->GetBallInHole())
+			{
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
+				m_physicsScene->SetBallInHole(true);
+			}
 			m_physicsScene->GetBall()->ApplyForce((Hole1->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole1->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
 		}
 	};
@@ -243,23 +259,7 @@ void PhysicsApp::ComboGolf()
 			{
 				std::cout << "Hole sunk!!" << std::endl;
 				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
-				if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500/glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-
-				}
-				else 
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(),1));
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetHighScore())
-				{
-					m_physicsScene->SetHighScore(m_physicsScene->GetScore());
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetSessionHighScore())
-				{
-					m_physicsScene->SetSessionHighScore(m_physicsScene->GetScore());
-				}
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(),1));
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole1->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole1->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
@@ -284,6 +284,12 @@ void PhysicsApp::ComboGolf()
 		std::cout << "Hole Entered: " << other << std::endl;
 		if (other == m_physicsScene->GetBall())
 		{
+			if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
+			{
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
+				m_physicsScene->SetBallInHole(true);
+			}
 			m_physicsScene->GetBall()->ApplyForce((Hole2->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole2->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
 		}
 	};
@@ -294,23 +300,7 @@ void PhysicsApp::ComboGolf()
 			{
 				std::cout << "Hole sunk!!" << std::endl;
 				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
-				if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-
-				}
-				else
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetHighScore())
-				{
-					m_physicsScene->SetHighScore(m_physicsScene->GetScore());
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetSessionHighScore())
-				{
-					m_physicsScene->SetSessionHighScore(m_physicsScene->GetScore());
-				}
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole2->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole2->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
@@ -335,6 +325,12 @@ void PhysicsApp::ComboGolf()
 		std::cout << "Hole Entered: " << other << std::endl;
 		if (other == m_physicsScene->GetBall())
 		{
+			if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
+			{
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
+				m_physicsScene->SetBallInHole(true);
+			}
 			m_physicsScene->GetBall()->ApplyForce((Hole3->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole3->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
 		}
 	};
@@ -345,23 +341,7 @@ void PhysicsApp::ComboGolf()
 			{
 				std::cout << "Hole sunk!!" << std::endl;
 				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
-				if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-
-				}
-				else
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetHighScore())
-				{
-					m_physicsScene->SetHighScore(m_physicsScene->GetScore());
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetSessionHighScore())
-				{
-					m_physicsScene->SetSessionHighScore(m_physicsScene->GetScore());
-				}
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole3->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole3->GetPosition(), m_physicsScene->GetBall()->GetPosition())));
@@ -386,6 +366,12 @@ void PhysicsApp::ComboGolf()
 		std::cout << "Hole Entered: " << other << std::endl;
 		if (other == m_physicsScene->GetBall())
 		{
+			if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
+			{
+				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
+				m_physicsScene->SetBallInHole(true);
+			}
 			m_physicsScene->GetBall()->ApplyForce((Hole4->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole4->GetPosition(), m_physicsScene->GetBall()->GetPosition())), glm::vec2(0));
 		}
 	};
@@ -396,23 +382,7 @@ void PhysicsApp::ComboGolf()
 			{
 				std::cout << "Hole sunk!!" << std::endl;
 				m_physicsScene->SetHoleCount(m_physicsScene->GetHoleCount() + 1);
-				if (glm::length(m_physicsScene->GetBall()->GetVelocity()) < 50.f)
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * 2500 / glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-
-				}
-				else
-				{
-					m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetHighScore())
-				{
-					m_physicsScene->SetHighScore(m_physicsScene->GetScore());
-				}
-				if (m_physicsScene->GetScore() > m_physicsScene->GetSessionHighScore())
-				{
-					m_physicsScene->SetSessionHighScore(m_physicsScene->GetScore());
-				}
+				m_physicsScene->SetScore(m_physicsScene->GetScore() + 10 * glm::length(m_physicsScene->GetBall()->GetVelocity()) * glm::max(m_physicsScene->GetHitCount(), 1));
 				m_physicsScene->SetBallInHole(true);
 			}
 			glm::vec2 Force = glm::vec2((Hole4->GetPosition() - m_physicsScene->GetBall()->GetPosition()) * (1.f / glm::distance(Hole4->GetPosition(), m_physicsScene->GetBall()->GetPosition())));

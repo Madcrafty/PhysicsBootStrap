@@ -44,7 +44,18 @@ public:
 	void SetBallInHole(bool a_state) { m_inHole = a_state; }
 	bool GetBallInHole() { return m_inHole; }
 
-	void SetScore(int a_score) { m_score = a_score; }
+	void SetScore(int a_score) 
+	{ 
+		m_score = a_score;
+		if (m_score > m_highscore)
+		{
+			SetHighScore(m_score);
+		}
+		if (m_score > m_sessionHighscore)
+		{
+			SetSessionHighScore(m_score);
+		}
+	}
 	int GetScore() { return m_score; }
 
 	void SetHighScore(int a_highscore) { m_highscore = a_highscore; }
