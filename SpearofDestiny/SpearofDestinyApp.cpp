@@ -3,6 +3,7 @@
 #include "Input.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include<imgui.h>
 
 using glm::vec3;
 using glm::vec4;
@@ -30,6 +31,9 @@ bool SpearofDestinyApp::startup() {
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth()/(float)getWindowHeight(), 0.1f, 1000.0f);
 
+	m_light.color = { 1,1,0 };
+	m_ambientLight = { 0.25f, 0.25f, 0 };
+
 	return LoadShaderAndMeshLogic();
 }
 
@@ -39,7 +43,11 @@ void SpearofDestinyApp::shutdown() {
 }
 
 void SpearofDestinyApp::update(float deltaTime) {
+	IMGUI_Logic();
+	m_camera.Update(deltaTime);
+	float time = getTime();
 
+	m_light.direction = glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
 
@@ -105,12 +113,15 @@ void SpearofDestinyApp::draw() {
 	// wipe the screen to the background colour
 	clearScreen();
 
+	glm::mat4 projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), (float)getWindowWidth());
+	glm::mat4 viewMatrix = m_camera.GetViewMatrix();
+
 	// update perspective based on screen size
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
 
-	DrawShaderAndMeshes(m_projectionMatrix, m_viewMatrix);
+	DrawShaderAndMeshes(projectionMatrix, viewMatrix);
 
-	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+	Gizmos::draw(projectionMatrix * viewMatrix);
 }
 
 bool SpearofDestinyApp::LoadShaderAndMeshLogic()
@@ -164,6 +175,20 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic()
 		printf("Simple Shader had an error: %s\n", m_bunnyShader.getLastError());
 		return false;
 	}
+#pragma endregion
+#pragma region Phong
+	// Load the vertex shader from a file
+	m_phongShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/phong.vert");
+
+	// Load the fragment shader from a file
+	m_phongShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/phong.frag");
+	if (!m_phongShader.link())
+	{
+		printf("Phong Shader had an error: %s\n", m_phongShader.getLastError());
+		return false;
+	}
+#pragma endregion
+	// Load meshes
 	if (m_bunnyMesh.load("./stanford/bunny.obj") == false)
 	{
 		printf("Bunny Mesh Failed\n");
@@ -174,8 +199,16 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic()
 		0,	   0, 0.5f,	 0,
 		0,	   0,    0,	 1
 	};
-#pragma endregion
-
+	if (m_dragoonMesh.load("./stanford/Dragon.obj") == false)
+	{
+		printf("Dragon Mesh Failed\n");
+	}
+	m_dragoonTransform = {
+		0.6f,	0,		0,		0,
+		0,		0.6f,	0,		0,
+		0,		0,		0.6f,	0,
+		0,		0,		0,		 1
+	};
 	return true;
 }
 
@@ -200,7 +233,65 @@ void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::m
 	m_bunnyShader.bindUniform("MeshFlatColor", glm::vec4(0,1,0,1));
 
 	// Draw bunny mesh
+	//m_bunnyMesh.draw();
+#pragma endregion
+#pragma region Phong
+	// Bind the shader
+	m_phongShader.bind();
+
+	// Bind camera position
+	m_phongShader.bindUniform("CameraPosition", vec3(glm::inverse(a_viewMatrix)[3]));
+
+	// Bind the light
+	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
+	m_phongShader.bindUniform("LightColor", m_light.color);
+	m_phongShader.bindUniform("LightDirection", m_light.direction);
+	
+
+	// Debug
+	m_phongShader.bindUniform("Ns", m_debug);
+	// Bind the PVM
+	pvm = a_projectionMatrix * a_viewMatrix * m_bunnyTransform;
+	m_phongShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind the lighting transforms
+	m_phongShader.bindUniform("ModelMatrix", m_bunnyTransform);
+
+	// Draw bunny mesh
 	m_bunnyMesh.draw();
+
+	// Bind the PVM
+	pvm = a_projectionMatrix * a_viewMatrix * m_dragoonTransform;
+	m_phongShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind the lighting transforms
+	m_phongShader.bindUniform("ModelMatrix", m_dragoonTransform);
+
+	// Draw dragoon mesh
+	m_dragoonMesh.draw();
 #pragma endregion
 
+}
+
+void SpearofDestinyApp::IMGUI_Logic()
+{
+	ImGui::Begin("Scene Light Settings");
+	ImGui::DragFloat3("Sunlight Direction", &m_light.direction[0], 0.1f, -1.f, 1.f);
+	ImGui::DragFloat3("Sunlight Colour", &m_light.color[0], 0.1f, 0.0f, 2.f);
+	ImGui::DragFloat("Specular Term Power", &m_debug, 0.05f);
+	ImGui::End();
+
+	ImGui::Begin("Inspector");
+	float* row1 [4] = { &m_dragoonTransform[0].x, &m_dragoonTransform[0].y, &m_dragoonTransform[0].z, &m_dragoonTransform[0].w };
+	float* row2 [4] = { &m_dragoonTransform[1].x, &m_dragoonTransform[1].y, &m_dragoonTransform[1].z, &m_dragoonTransform[1].w };
+	float* row3 [4] = { &m_dragoonTransform[2].x, &m_dragoonTransform[2].y, &m_dragoonTransform[2].z, &m_dragoonTransform[2].w };
+	float* row4 [4] = { &m_dragoonTransform[3].x, &m_dragoonTransform[3].y, &m_dragoonTransform[3].z, &m_dragoonTransform[3].w };
+						
+	ImGui::DragFloat4("Transform Matrix1", *row1, 0.1f);
+	ImGui::DragFloat4("Transform Matrix2", *row2, 0.1f);
+	ImGui::DragFloat4("Transform Matrix3", *row3, 0.1f);
+	ImGui::DragFloat4("Transform Matrix4", *row4, 0.1f);
+
+	ImGui::DragFloat("Specular Power", &m_dragoonSpecPower, 0.05f);
+	ImGui::End();
 }
