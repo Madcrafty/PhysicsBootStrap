@@ -31,8 +31,8 @@ bool SpearofDestinyApp::startup() {
 	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth()/(float)getWindowHeight(), 0.1f, 1000.0f);
 
-	m_light.color = { 1,1,0 };
-	m_ambientLight = { 0.25f, 0.25f, 0 };
+	m_light.color = { 1,1,1 };
+	m_ambientLight = { 0.25f, 0.25f, 0.25f };
 
 	return LoadShaderAndMeshLogic();
 }
@@ -155,7 +155,8 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic()
 
 	unsigned int indices[6] = { 0,1,2,2,1,3 };
 
-	m_quadMesh.Initialise(4, vertices, 6, indices);
+	m_quadMesh.InitialiseQuad();
+	//m_quadMesh.Initialise(4, vertices, 6, indices);
 	// We will make the quad 10 units by 
 	m_quadTransform = {
 		10,	0,	0,	0,
@@ -188,10 +189,36 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic()
 		return false;
 	}
 #pragma endregion
+#pragma region TextureShader
+	// Load the vertex shader from a file
+	m_textureShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/texture.vert");
+
+	// Load the fragment shader from a file
+	m_textureShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/texture.frag");
+	if (!m_textureShader.link())
+	{
+		printf("Simple Shader had an error: %s\n", m_textureShader.getLastError());
+		return false;
+	}
+#pragma endregion
+#pragma region NormalMap
+	// Load the vertex shader from a file
+	m_normalMapShader.loadShader(aie::eShaderStage::VERTEX, "./shaders/normalMap.vert");
+
+	// Load the fragment shader from a file
+	m_normalMapShader.loadShader(aie::eShaderStage::FRAGMENT, "./shaders/normalMap.frag");
+	
+	if (!m_normalMapShader.link())
+	{
+		printf("Phong Shader had an error: %s\n", m_normalMapShader.getLastError());
+		return false;
+	}
+#pragma endregion
 	// Load meshes
 	if (m_bunnyMesh.load("./stanford/bunny.obj") == false)
 	{
 		printf("Bunny Mesh Failed\n");
+		return false;
 	}
 	m_bunnyTransform = {
 		0.5f,  0,    0,	 0,
@@ -202,13 +229,47 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic()
 	if (m_dragoonMesh.load("./stanford/Dragon.obj") == false)
 	{
 		printf("Dragon Mesh Failed\n");
+		return false;
 	}
 	m_dragoonTransform = {
 		0.6f,	0,		0,		0,
 		0,		0.6f,	0,		0,
 		0,		0,		0.6f,	0,
 		0,		0,		0,		 1
+	};	
+	if (m_gridTexture.load("./textures/numbered_grid.tga") == false)
+	{
+		printf("Failed to load: numbered_grid.tga\n");
+		return false;
+	}
+	if (m_spearMesh.load("./soulspear/soulspear.obj", true, true) == false)
+	{
+		printf("Spear Mesh Failed\n");
+		return false;
+	}
+	m_spearTransform = {
+		1.0f,	0,		0,		0,
+		0,		1.0f,	0,		0,
+		0,		0,		1.0f,	0,
+		0,		0,		0,		 1
 	};
+	if (m_shotgunMesh.load("./shotgun/shotgun.obj", true, true) == false)
+	{
+		printf("Shotgun Mesh Failed\n");
+		return false;
+	}
+	m_shotgunTransform = {
+		1.0f,	0,		0,		0,
+		0,		1.0f,	0,		0,
+		0,		0,		1.0f,	0,
+		0,		0,		0,		 1
+	};
+	//m_dragoonTransform = {
+	//	0.6f,	0,		0,		0,
+	//	0,		0.6f,	0,		0,
+	//	0,		0,		0.6f,	0,
+	//	0,		0,		0,		 1
+	//};
 	return true;
 }
 
@@ -217,11 +278,16 @@ void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::m
 	auto pvm = a_projectionMatrix * a_viewMatrix * glm::mat4(0);
 #pragma region Quad
 	// Bind the shader
-	m_simpleShader.bind();
+	m_textureShader.bind();
 
 	//Bind the transform of the mesh
 	pvm = a_projectionMatrix * a_viewMatrix * m_quadTransform; // PVM = Projection View Matrix
-	m_simpleShader.bindUniform("ProjectionViewModel", pvm);
+	m_textureShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind texture to a location of your choice (0)
+	m_textureShader.bindUniform("diffuseTexture", 0);
+
+	m_gridTexture.bind(0);
 
 	m_quadMesh.Draw();
 #pragma endregion
@@ -230,6 +296,8 @@ void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::m
 	m_bunnyShader.bind();
 	pvm = a_projectionMatrix * a_viewMatrix * m_bunnyTransform;
 	m_bunnyShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind texture to a location of your choice (0)
 	m_bunnyShader.bindUniform("MeshFlatColor", glm::vec4(0,1,0,1));
 
 	// Draw bunny mesh
@@ -240,7 +308,7 @@ void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::m
 	m_phongShader.bind();
 
 	// Bind camera position
-	m_phongShader.bindUniform("CameraPosition", vec3(glm::inverse(a_viewMatrix)[3]));
+	m_phongShader.bindUniform("CameraPosition", m_camera.GetPosition());
 
 	// Bind the light
 	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
@@ -270,7 +338,29 @@ void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::m
 	// Draw dragoon mesh
 	m_dragoonMesh.draw();
 #pragma endregion
+	m_normalMapShader.bind();
+	// Debug
+	m_normalMapShader.bindUniform("Ns", m_debug);
+	//Bind the transform of the mesh
+	pvm = a_projectionMatrix * a_viewMatrix * m_spearTransform; // PVM = Projection View Matrix
+	m_normalMapShader.bindUniform("ProjectionViewModel", pvm);
+	m_normalMapShader.bindUniform("CameraPosition", m_camera.GetPosition());
+	m_normalMapShader.bindUniform("AmbientColor", m_ambientLight);
+	m_normalMapShader.bindUniform("LightColor", m_light.color);
+	m_normalMapShader.bindUniform("LightDirection", m_light.direction);
+	m_normalMapShader.bindUniform("ModelMatrix", m_spearTransform);
+	//m_normalMapShader.bindUniform("Ns", m_debug);
 
+	// Bind texture to a location of your choice (0)
+	//m_textureShader.bindUniform("diffuseTexture", 0);
+
+	m_spearMesh.draw();
+
+	pvm = a_projectionMatrix * a_viewMatrix * m_shotgunTransform; // PVM = Projection View Matrix
+	m_normalMapShader.bindUniform("ProjectionViewModel", pvm);
+	m_normalMapShader.bindUniform("ModelMatrix", m_shotgunTransform);
+
+	m_shotgunMesh.draw();
 }
 
 void SpearofDestinyApp::IMGUI_Logic()
@@ -282,16 +372,22 @@ void SpearofDestinyApp::IMGUI_Logic()
 	ImGui::End();
 
 	ImGui::Begin("Inspector");
-	float* row1 [4] = { &m_dragoonTransform[0].x, &m_dragoonTransform[0].y, &m_dragoonTransform[0].z, &m_dragoonTransform[0].w };
-	float* row2 [4] = { &m_dragoonTransform[1].x, &m_dragoonTransform[1].y, &m_dragoonTransform[1].z, &m_dragoonTransform[1].w };
-	float* row3 [4] = { &m_dragoonTransform[2].x, &m_dragoonTransform[2].y, &m_dragoonTransform[2].z, &m_dragoonTransform[2].w };
-	float* row4 [4] = { &m_dragoonTransform[3].x, &m_dragoonTransform[3].y, &m_dragoonTransform[3].z, &m_dragoonTransform[3].w };
+	glm::mat4* selected = &m_shotgunTransform;
+	float* row1 [4] = { &selected[0][0].x, &selected[0][0].y, &selected[0][0].z, &selected[0][0].w };
+	float* row2 [4] = { &selected[0][1].x, &selected[0][1].y, &selected[0][1].z, &selected[0][1].w };
+	float* row3 [4] = { &selected[0][2].x, &selected[0][2].y, &selected[0][2].z, &selected[0][2].w };
+	float* row4 [4] = { &selected[0][3].x, &selected[0][3].y, &selected[0][3].z, &selected[0][3].w };
 						
 	ImGui::DragFloat4("Transform Matrix1", *row1, 0.1f);
 	ImGui::DragFloat4("Transform Matrix2", *row2, 0.1f);
 	ImGui::DragFloat4("Transform Matrix3", *row3, 0.1f);
 	ImGui::DragFloat4("Transform Matrix4", *row4, 0.1f);
 
-	ImGui::DragFloat("Specular Power", &m_dragoonSpecPower, 0.05f);
+	ImGui::DragFloat("Specular Power", &m_shotgunSpecPower, 0.05f);
+	ImGui::End();
+
+	ImGui::Begin("Camera Controle");
+	ImGui::DragFloat("Camera Speed", &m_camera.m_speed, 0.05f);
+	ImGui::DragFloat("Camera Sensitivity", &m_camera.m_sensitivity, 0.05f);
 	ImGui::End();
 }

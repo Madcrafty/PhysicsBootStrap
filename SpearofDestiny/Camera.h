@@ -15,6 +15,10 @@ private:
 	float m_theta; // In degrees
 	float m_phi; // In degrees
 	glm::vec3 m_position;
+	
 	float m_lastMouseX, m_lastMouseY;
+public:
+	float m_speed = 1;
+	float m_sensitivity = 1;
 };
 

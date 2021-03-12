@@ -39,6 +39,13 @@ void Mesh::InitialiseQuad()
 	vertices[3].normal = {0,1,0,0};
 	vertices[4].normal = {0,1,0,0};
 	vertices[5].normal = {0,1,0,0};
+
+	vertices[0].textCoord = {0,1}; // bottom left
+	vertices[1].textCoord = {1,1}; // bottom right
+	vertices[2].textCoord = {0,0}; // top left
+	vertices[3].textCoord = {0,0}; // top left
+	vertices[4].textCoord = {1,1}; // bottom right
+	vertices[5].textCoord = {1,0}; // top right
 	// Fill the vertex buffer
 	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(Vertex), vertices, GL_STATIC_DRAW);
 
@@ -46,9 +53,13 @@ void Mesh::InitialiseQuad()
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
 
-	// Enable the second element as norlam
+	// Enable the second element as normal
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1,4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)16);
+
+	// Enable the third element as TexCoord
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)32);
 
 	// Unbind the buffers
 	glBindVertexArray(0);
