@@ -113,7 +113,7 @@ void SpearofDestinyApp::draw() {
 	// wipe the screen to the background colour
 	clearScreen();
 
-	glm::mat4 projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), (float)getWindowWidth());
+	glm::mat4 projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), (float)getWindowHeight());
 	glm::mat4 viewMatrix = m_camera.GetViewMatrix();
 
 	// update perspective based on screen size
@@ -253,7 +253,7 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic()
 		0,		0,		1.0f,	0,
 		0,		0,		0,		 1
 	};
-	if (m_shotgunMesh.load("./shotgun/shotgun.obj", true, true) == false)
+	if (m_shotgunMesh.load("./shotgun/new_shotgun.obj", true, true) == false)
 	{
 		printf("Shotgun Mesh Failed\n");
 		return false;
