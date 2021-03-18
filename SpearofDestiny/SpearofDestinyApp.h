@@ -6,6 +6,8 @@
 #include "Camera.h"
 #include "OBJMesh.h"
 #include <glm/mat4x4.hpp>
+#include "Scene.h"
+#include "Instance.h"
 
 class SpearofDestinyApp : public aie::Application {
 public:
@@ -56,17 +58,20 @@ protected:
 	glm::mat4			m_shotgunTransform;
 	float				m_shotgunSpecPower;
 
-	struct Light
-	{
-		glm::vec3 direction;
-		glm::vec3 color;
-	};
-	Light				m_light;
-	glm::vec3			m_ambientLight;
+	Scene* m_scene;
+	Instance* m_selectedObject = nullptr;
+
+	//struct Light
+	//{
+	//	glm::vec3 direction;
+	//	glm::vec3 color;
+	//};
+	//Light				m_light;
+	//glm::vec3			m_ambientLight;
 	// Debug
 	float				m_debug = 0;
 public:
-	bool LoadShaderAndMeshLogic();
+	bool LoadShaderAndMeshLogic(Light a_light);
 	void DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::mat4 a_viewMatrix);
 	void IMGUI_Logic();
 };
