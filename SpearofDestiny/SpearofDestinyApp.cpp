@@ -300,20 +300,20 @@ void SpearofDestinyApp::IMGUI_Logic()
 
 	ImGui::Begin("Heirarchy");
 	ImGui::ListBoxHeader("Objects:");
-	//for (auto const& obj : m_scene->GetInstances())
-	//{
-	//	if (ImGui::Selectable(obj->GetName(), (obj == m_selectedObject) ? true : false))
-	//	{
-	//		m_selectedObject = obj;
-	//	}
-	//}
-	for (auto i = m_scene->GetInstances().begin(); i != m_scene->GetInstances().end(); i++)
+	for (auto const& obj : m_scene->GetInstances())
 	{
-		if (ImGui::Selectable((*i)->GetName(), (*i == m_selectedObject)? true : false))
+		if (ImGui::Selectable(obj->GetName().c_str(), (obj == m_selectedObject) ? true : false))
 		{
-			m_selectedObject = *i;
+			m_selectedObject = obj;
 		}
 	}
+	//for (auto i = m_scene->GetInstances().begin(); i != m_scene->GetInstances().end(); i++)
+	//{
+	//	if (ImGui::Selectable((*i)->GetName(), (*i == m_selectedObject)? true : false))
+	//	{
+	//		m_selectedObject = *i;
+	//	}
+	//}
 	ImGui::ListBoxFooter();
 	ImGui::End();
 	if (m_selectedObject != nullptr)
@@ -325,10 +325,15 @@ void SpearofDestinyApp::IMGUI_Logic()
 		float* row3[4] = { &selected[0][2].x, &selected[0][2].y, &selected[0][2].z, &selected[0][2].w };
 		float* row4[4] = { &selected[0][3].x, &selected[0][3].y, &selected[0][3].z, &selected[0][3].w };
 
-		ImGui::DragFloat4("Transform Matrix1", *row1, 0.1f);
-		ImGui::DragFloat4("Transform Matrix2", *row2, 0.1f);
-		ImGui::DragFloat4("Transform Matrix3", *row3, 0.1f);
-		ImGui::DragFloat4("Transform Matrix4", *row4, 0.1f);
+		ImGui::Text("Transform");
+		ImGui::DragFloat4(" ", *row1, 0.1f);
+		ImGui::DragFloat4("  ", *row2, 0.1f);
+		ImGui::DragFloat4("   ", *row3, 0.1f);
+		ImGui::DragFloat4("    ", *row4, 0.1f);
+
+		ImGui::Text("Tools");
+
+
 
 		//ImGui::DragFloat("specularPower", &m_shotgunSpecPower, 0.05f);
 		ImGui::End();

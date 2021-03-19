@@ -17,14 +17,21 @@ Scene::~Scene()
 void Scene::AddInstance(Instance* a_instance)
 {
 	// Check if name exists in list
-	for (auto const& obj : GetInstances())
+	bool nametaken = true;
+	int index = 1;
+	while (nametaken == true)
 	{
-		if (obj->GetName() == a_instance->GetName())
+		nametaken = false;
+		for (auto const& obj : GetInstances())
 		{
-
+			if (obj->GetName() == a_instance->GetName())
+			{
+				nametaken = true;
+				a_instance->SetName(index);
+				index++;
+			}
 		}
 	}
-	
 	m_instances.push_back(a_instance);
 }
 

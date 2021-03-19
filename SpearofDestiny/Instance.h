@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <string>
 
 class Camera;
 class Scene;
@@ -20,7 +21,7 @@ public:
 
 	static glm::mat4 MakeTransform(glm::vec3 a_position, glm::vec3 a_eulerAngles, glm::vec3 a_scale);
 	glm::mat4* GetTransform() { return &m_transform; }
-	const char* GetName();
+	std::string GetName() { return m_name; };
 
 	void SetName();
 	void SetName(int a_index);
@@ -30,6 +31,6 @@ protected:
 	glm::mat4 m_transform;
 	aie::OBJMesh* m_mesh;
 	aie::ShaderProgram* m_shader;
-	const char* m_name;
+	std::string m_name;
 };
 

@@ -59,16 +59,14 @@ glm::mat4 Instance::MakeTransform(glm::vec3 a_position, glm::vec3 a_eulerAngles,
 		* glm::scale(glm::mat4(1), a_scale);
 }
 
-const char* Instance::GetName()
-{
-	return m_mesh->getFilename().c_str();
-}
-
 void Instance::SetName()
 {
-	m_name = m_mesh->getFilename().c_str();
+	m_name = m_mesh->getFilename();
 }
 void Instance::SetName(int a_index)
 {
-	m_name = m_mesh->getFilename().c_str() + a_index;
+	m_name = m_mesh->getFilename().c_str();
+	m_name += " (";
+	m_name += std::to_string(a_index);
+	m_name += ")";
 }
