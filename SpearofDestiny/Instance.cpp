@@ -29,9 +29,9 @@ void Instance::Draw(Scene* a_scene)
 	// Debug
 	//m_normalMapShader.bindUniform("Ns", m_debug);
 	//Bind the transform of the mesh
-	auto pvm = a_scene->GetCamera()->GetProjectionMatrix(a_scene->GetWindowSize().x, a_scene->GetWindowSize().y) * a_scene->GetCamera()->GetViewMatrix() * m_transform; // PVM = Projection View Matrix
+	auto pvm = a_scene->GetActiveCamera()->GetProjectionMatrix(a_scene->GetWindowSize().x, a_scene->GetWindowSize().y) * a_scene->GetActiveCamera()->GetViewMatrix() * m_transform; // PVM = Projection View Matrix
 	m_shader->bindUniform("ProjectionViewModel", pvm);
-	m_shader->bindUniform("CameraPosition", a_scene->GetCamera()->GetPosition());
+	m_shader->bindUniform("CameraPosition", a_scene->GetActiveCamera()->GetPosition());
 	m_shader->bindUniform("AmbientColor", a_scene->GetAmbientLight());
 	m_shader->bindUniform("LightColor", a_scene->GetLight().m_color);
 	m_shader->bindUniform("LightDirection", a_scene->GetLight().m_direction);
@@ -57,16 +57,4 @@ glm::mat4 Instance::MakeTransform(glm::vec3 a_position, glm::vec3 a_eulerAngles,
 		* glm::rotate(glm::mat4(1), glm::radians(a_eulerAngles.z), glm::vec3(0, 0, 1))
 		* glm::rotate(glm::mat4(1), glm::radians(a_eulerAngles.z), glm::vec3(0, 0, 1))
 		* glm::scale(glm::mat4(1), a_scale);
-}
-
-void Instance::SetName()
-{
-	m_name = m_mesh->getFilename();
-}
-void Instance::SetName(int a_index)
-{
-	m_name = m_mesh->getFilename().c_str();
-	m_name += " (";
-	m_name += std::to_string(a_index);
-	m_name += ")";
 }

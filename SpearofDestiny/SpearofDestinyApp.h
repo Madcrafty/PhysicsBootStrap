@@ -23,10 +23,8 @@ public:
 
 protected:
 
-	Camera		m_camera;
+	//Camera		m_camera;
 	// camera transforms
-	glm::mat4	m_viewMatrix;
-	glm::mat4	m_projectionMatrix;
 
 	aie::Texture		m_gridTexture;
 
@@ -60,6 +58,8 @@ protected:
 
 	Scene* m_scene;
 	Instance* m_selectedObject = nullptr;
+	Light* m_selectedLight = nullptr;
+	Camera* m_selectedCamera = nullptr;
 
 	//struct Light
 	//{

@@ -3,6 +3,10 @@
 #include "Input.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include<glm/gtc/quaternion.hpp>
+#include<glm/gtx/quaternion.hpp>
+#include<glm/gtx/transform.hpp>
 #include<imgui.h>
 
 
@@ -30,8 +34,8 @@ bool SpearofDestinyApp::startup() {
 	Gizmos::create(10000, 10000, 10000, 10000);
 
 	// create simple camera transforms
-	m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth()/(float)getWindowHeight(), 0.1f, 1000.0f);
+	//m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
+	//m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth()/(float)getWindowHeight(), 0.1f, 1000.0f);
 
 	Light light;
 	light.m_color = { 1,1,1 };
@@ -47,10 +51,10 @@ void SpearofDestinyApp::shutdown() {
 
 void SpearofDestinyApp::update(float deltaTime) {
 	IMGUI_Logic();
-	m_camera.Update(deltaTime);
+	m_scene->GetActiveCamera()->Update(deltaTime);
 	float time = getTime();
 
-	m_scene->GetLight().m_direction = glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
+	//m_scene->GetLight().m_direction = glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
 
@@ -115,16 +119,16 @@ void SpearofDestinyApp::draw() {
 
 	// wipe the screen to the background colour
 	clearScreen();
-
-	glm::mat4 projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(), (float)getWindowHeight());
-	glm::mat4 viewMatrix = m_camera.GetViewMatrix();
+	
+	glm::mat4 projectionMatrix = m_scene->GetActiveCamera()->GetProjectionMatrix(getWindowWidth(), (float)getWindowHeight());
+	glm::mat4 viewMatrix = m_scene->GetActiveCamera()->GetViewMatrix();
 
 	// update perspective based on screen size
-	m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
+	//m_scene->GetCamera()->GetProjectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
 
 	//DrawShaderAndMeshes(projectionMatrix, viewMatrix);
 	m_scene->Draw();
-
+	
 	Gizmos::draw(projectionMatrix * viewMatrix);
 }
 
@@ -218,6 +222,7 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic(Light a_light)
 		return false;
 	}
 #pragma endregion
+#pragma region LoadMeshes
 	// Load meshes
 	if (m_bunnyMesh.load("./stanford/bunny.obj") == false)
 	{
@@ -274,28 +279,35 @@ bool SpearofDestinyApp::LoadShaderAndMeshLogic(Light a_light)
 	//	0,		0,		0.6f,	0,
 	//	0,		0,		0,		 1
 	//};
-	m_scene = new Scene(&m_camera, glm::vec2(getWindowWidth(), getWindowHeight()), a_light, glm::vec3(0.25f));
-	for (int i = 0; i < 10; i++)
+#pragma endregion
+	m_scene = new Scene(glm::vec2(getWindowWidth(), getWindowHeight()), a_light, glm::vec3(0.25f));
+	for (int i = 0; i < 2; i++)
 	{
 		m_scene->AddInstance(new Instance(glm::vec3(i * 2, 0, 0), glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1), &m_spearMesh, &m_normalMapShader));
 	}
+	m_scene->AddInstance(new Instance(glm::vec3(-5, 1, 0), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), &m_shotgunMesh, &m_normalMapShader));
+	m_scene->AddInstance(new Instance(glm::vec3(0, 0, 5), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), &m_dragoonMesh, &m_phongShader));
 	// red light - left
-	m_scene->GetPointLights().push_back(Light(vec3(5, 3, 0), vec3(1, 0, 0), 50));
+	m_scene->AddLight(new Light(vec3(5, 3, 0), vec3(1, 0, 0), 50));
+	//m_scene->GetPointLights().push_back(Light(vec3(5, 3, 0), vec3(1, 0, 0), 50));
 	// green light - right
-	m_scene->GetPointLights().push_back(Light(vec3(-5, 3, 0), vec3(0, 1, 0), 50));
+	m_scene->AddLight(new Light(vec3(-5, 3, 0), vec3(0, 1, 0), 50));
+	//m_scene->GetPointLights().push_back(Light(vec3(-5, 3, 0), vec3(0, 1, 0), 50));
+	m_scene->AddCamera(new Camera(glm::vec3(20, 0, 0),180,0, false));
+	m_scene->AddCamera(new Camera(glm::vec3(0, 20, 0),0,-90, false));
+	m_scene->AddCamera(new Camera(glm::vec3(0, 0, 20),-90,0, false));
 	return true;
 }
 
 
-
 void SpearofDestinyApp::IMGUI_Logic()
 {
-	ImGui::Begin("Scene Light Settings");
+	ImGui::Begin("the only moving light");
 	ImGui::DragFloat3("Sunlight Direction", &m_scene->GetLight().m_direction[0], 0.1f, -1.f, 1.f);
 	ImGui::DragFloat3("Sunlight Colour", &m_scene->GetLight().m_color[0], 0.1f, 0.0f, 2.f);
 	//ImGui::DragFloat3("Sunlight Direction", &m_light.direction[0], 0.1f, -1.f, 1.f);
 	//ImGui::DragFloat3("Sunlight Colour", &m_light.color[0], 0.1f, 0.0f, 2.f);
-	ImGui::DragFloat("Specular Term Power", &m_debug, 0.05f);
+	//ImGui::DragFloat("Specular Term Power", &m_debug, 0.05f);
 	ImGui::End();
 
 	ImGui::Begin("Heirarchy");
@@ -315,6 +327,25 @@ void SpearofDestinyApp::IMGUI_Logic()
 	//	}
 	//}
 	ImGui::ListBoxFooter();
+	ImGui::ListBoxHeader("Lights:");
+	for (auto const& obj : m_scene->GetPointLights())
+	{
+		if (ImGui::Selectable(obj->m_name.c_str(), (obj == m_selectedLight) ? true : false))
+		{
+			m_selectedLight = obj;
+		}
+	}
+	ImGui::ListBoxFooter();
+	ImGui::ListBoxHeader("Cameras:");
+	for (auto const& obj : m_scene->GetCameras())
+	{
+		if (ImGui::Selectable(obj->GetName().c_str(), (obj == m_selectedCamera) ? true : false))
+		{
+			m_selectedCamera = obj;
+			m_scene->SetActiveCamera(m_selectedCamera);
+		}
+	}
+	ImGui::ListBoxFooter();
 	ImGui::End();
 	if (m_selectedObject != nullptr)
 	{
@@ -325,6 +356,19 @@ void SpearofDestinyApp::IMGUI_Logic()
 		float* row3[4] = { &selected[0][2].x, &selected[0][2].y, &selected[0][2].z, &selected[0][2].w };
 		float* row4[4] = { &selected[0][3].x, &selected[0][3].y, &selected[0][3].z, &selected[0][3].w };
 
+		//float* position[3] = { &selected[0][3].x, &selected[0][3].y, &selected[0][3].z };
+		float* position = &selected[0][3].x;
+		// Scale values are not adjacent so it isn't correctly read with ImGui.
+		// Resorted to creating a tmp value to store the scale
+		float scale[3] = { selected[0][0].x, selected[0][1].y, selected[0][2].z };
+
+		// Quaturnions
+		glm::quat curRotation = glm::toQuat(*selected);
+		//glm::quat targetRotation = curRotation;
+		//float tmpTarget[4]{ targetRotation.x, targetRotation.y, targetRotation.z, targetRotation.w };
+
+		float tmpTarget[4]{ curRotation.x, curRotation.y, curRotation.z, curRotation.w };
+
 		ImGui::Text("Transform");
 		ImGui::DragFloat4(" ", *row1, 0.1f);
 		ImGui::DragFloat4("  ", *row2, 0.1f);
@@ -332,18 +376,39 @@ void SpearofDestinyApp::IMGUI_Logic()
 		ImGui::DragFloat4("    ", *row4, 0.1f);
 
 		ImGui::Text("Tools");
+		ImGui::DragFloat3("Position", position, 0.1f);
+		ImGui::DragFloat3("Scale", scale, 0.1f);
+		// Updating transform scale
+		//selected[0][0].x = scale[0];
+		//selected[0][1].y = scale[1];
+		//selected[0][2].z = scale[2];
+		ImGui::DragFloat4("Rotation", tmpTarget, 0.1f);
 
+		curRotation.x = tmpTarget[0];
+		curRotation.y = tmpTarget[1];
+		curRotation.z = tmpTarget[2];
+		//curRotation.w = tmpTarget[3];
 
+		glm::vec3 tmpPosition = glm::vec3(position[0], position[1], position[2]);
+		*selected = glm::translate(tmpPosition) * glm::toMat4(glm::normalize(curRotation));
 
 		//ImGui::DragFloat("specularPower", &m_shotgunSpecPower, 0.05f);
 		ImGui::End();
 	}
-
-
-	ImGui::Begin("Camera Controle");
-	ImGui::DragFloat("Camera Speed", &m_camera.m_speed, 0.05f);
-	ImGui::DragFloat("Camera Sensitivity", &m_camera.m_sensitivity, 0.05f);
-	ImGui::End();
+	if (m_selectedLight != nullptr)
+	{
+		ImGui::Begin("Active light");
+		ImGui::DragFloat3("Position", &m_selectedLight->m_direction[0], 0.1f);
+		ImGui::DragFloat3("Colour", &m_selectedLight->m_color[0], 0.1f);
+		ImGui::End();
+	}
+	if (m_scene->GetActiveCamera()->IsDynamic())
+	{
+		ImGui::Begin("Camera Controle");
+		ImGui::DragFloat("Camera Speed", &m_scene->GetActiveCamera()->m_speed, 0.05f);
+		ImGui::DragFloat("Camera Sensitivity", &m_scene->GetActiveCamera()->m_sensitivity, 0.05f);
+		ImGui::End();
+	}
 }
 
 //void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::mat4 a_viewMatrix)

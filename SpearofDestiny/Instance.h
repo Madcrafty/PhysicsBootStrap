@@ -1,4 +1,5 @@
 #pragma once
+#include "OBJMesh.h"
 #include <glm/glm.hpp>
 #include <string>
 
@@ -23,8 +24,8 @@ public:
 	glm::mat4* GetTransform() { return &m_transform; }
 	std::string GetName() { return m_name; };
 
-	void SetName();
-	void SetName(int a_index);
+	void SetName() { m_name = m_mesh->getFilename(); }
+	void SetName(std::string a_name) { m_name = a_name; }
 	// aie::OBJMesh* m_mesh;
 	// aie::ShaderProgram* m_shader;
 protected:
