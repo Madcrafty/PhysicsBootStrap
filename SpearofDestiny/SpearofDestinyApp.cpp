@@ -390,6 +390,7 @@ void SpearofDestinyApp::IMGUI_Logic()
 		//curRotation.w = tmpTarget[3];
 
 		glm::vec3 tmpPosition = glm::vec3(position[0], position[1], position[2]);
+		//glm::vec3 tmpScale = glm::vec3(scale[0], scale[1], scale[2]);
 		*selected = glm::translate(tmpPosition) * glm::toMat4(glm::normalize(curRotation));
 
 		//ImGui::DragFloat("specularPower", &m_shotgunSpecPower, 0.05f);
