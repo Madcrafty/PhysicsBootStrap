@@ -5,13 +5,13 @@
 
 // Constructors
 Scene::Scene(glm::vec2 a_windowSize, Light& a_light, glm::vec3 a_ambientLight)
-	: m_windowSize(a_windowSize), m_light(a_light), m_ambientLight(a_ambientLight)
+	: m_windowSize(a_windowSize), m_directionalLight(a_light), m_ambientLight(a_ambientLight)
 {
 	m_activeCamera = new Camera("FreeCam", true);
 	AddCamera(m_activeCamera);
 }
 Scene::Scene(Camera* a_camera, glm::vec2 a_windowSize, Light& a_light, glm::vec3 a_ambientLight)
-	: m_activeCamera(a_camera), m_windowSize(a_windowSize), m_light(a_light), m_ambientLight(a_ambientLight)
+	: m_activeCamera(a_camera), m_windowSize(a_windowSize), m_directionalLight(a_light), m_ambientLight(a_ambientLight)
 {
 }
 

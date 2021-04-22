@@ -26,9 +26,6 @@ public:
 
 protected:
 
-	//Camera		m_camera;
-	// camera transforms
-
 	aie::Texture		m_gridTexture;
 
 	// =====SHADER=====

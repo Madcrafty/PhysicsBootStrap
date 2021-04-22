@@ -31,26 +31,19 @@ Instance::Instance(glm::vec3 a_position, glm::vec3 a_eulerAngles, glm::vec3 a_sc
 void Instance::Draw(Scene* a_scene)
 {
 	m_shader->bind();
-	// Debug
-	//m_normalMapShader.bindUniform("Ns", m_debug);
 	//Bind the transform of the mesh
 	auto pvm = a_scene->GetActiveCamera()->GetProjectionMatrix(a_scene->GetWindowSize().x, a_scene->GetWindowSize().y) * a_scene->GetActiveCamera()->GetViewMatrix() * m_transform; // PVM = Projection View Matrix
 	m_shader->bindUniform("ProjectionViewModel", pvm);
 	m_shader->bindUniform("CameraPosition", a_scene->GetActiveCamera()->GetPosition());
 	m_shader->bindUniform("AmbientColor", a_scene->GetAmbientLight());
-	m_shader->bindUniform("LightColor", a_scene->GetLight().m_color);
-	m_shader->bindUniform("LightDirection", a_scene->GetLight().m_direction);
-	//m_shader->bindUniform("SpecularPower", 32);
+	m_shader->bindUniform("LightColor", a_scene->GetDirectionalLight().m_color);
+	m_shader->bindUniform("LightDirection", a_scene->GetDirectionalLight().m_direction);
 	m_shader->bindUniform("ModelMatrix", m_transform);
 
 	int num_lights = a_scene->GetNumLights();
 	m_shader->bindUniform("numLights", num_lights);
 	m_shader->bindUniform("PointLightPosition", num_lights, a_scene->GetPointLightPositions());
 	m_shader->bindUniform("PointLightColor", num_lights, a_scene->GetPointLightColor());
-	//m_normalMapShader.bindUniform("Ns", m_debug);
-
-	// Bind texture to a location of your choice (0)
-	//m_textureShader.bindUniform("diffuseTexture", 0);
 
 	m_mesh->draw();
 }

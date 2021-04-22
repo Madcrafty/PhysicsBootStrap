@@ -45,31 +45,35 @@ public:
 	void AddLight(Light* a_light);
 	void Draw();
 
+	// Camera functions
 	Camera* GetActiveCamera() { return m_activeCamera; }
 	void SetActiveCamera(Camera* a_camera) { m_activeCamera = a_camera; }
 	std::list<Camera*> GetCameras() { return m_cameras; }
 	glm::vec2 GetWindowSize() { return m_windowSize; }
-	Light& GetLight() { return m_light; }
-	glm::vec3 GetAmbientLight() { return m_ambientLight; }
-	std::list<Instance*>& GetInstances() { return m_instances; }
-
+	
+	// Light functions
+	Light& GetDirectionalLight() { return m_directionalLight; }
 	int GetNumLights() { return (int)m_pointLights.size(); }
-	glm::vec3* GetPointLightPositions() { return &m_pointLightPositions[0]; }
-	glm::vec3* GetPointLightColor() { return &m_pointLightColors[0]; }
-
+	glm::vec3 GetAmbientLight() { return m_ambientLight; }
 	std::vector<Light*>& GetPointLights() { return m_pointLights; }
 
+	glm::vec3* GetPointLightPositions() { return &m_pointLightPositions[0]; }
+	glm::vec3* GetPointLightColor() { return &m_pointLightColors[0]; }
+	
+	// Instance funciton
+	std::list<Instance*>& GetInstances() { return m_instances; }
 protected:
 	Camera* m_activeCamera;
 	std::list<Camera*> m_cameras;
 	glm::vec2 m_windowSize;
-	Light m_light;
-	Light m_sunlight;
+
+	Light m_directionalLight;
 	std::vector<Light*> m_pointLights;
 	glm::vec3 m_ambientLight;
-	std::list<Instance*> m_instances;
 
 	glm::vec3 m_pointLightPositions[MAX_LIGHTS];
 	glm::vec3 m_pointLightColors[MAX_LIGHTS];
+
+	std::list<Instance*> m_instances;
 };
 
