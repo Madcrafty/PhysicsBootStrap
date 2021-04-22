@@ -1,11 +1,14 @@
 #pragma once
-
+#define GLM_ENABLE_EXPERIMENTAL
 #include "Application.h"
 #include "Shader.h"
 #include "Mesh.h"
 #include "Camera.h"
 #include "OBJMesh.h"
 #include <glm/mat4x4.hpp>
+#include<glm/gtc/quaternion.hpp>
+#include<glm/gtx/quaternion.hpp>
+#include<glm/gtx/transform.hpp>
 #include "Scene.h"
 #include "Instance.h"
 
@@ -61,15 +64,10 @@ protected:
 	Light* m_selectedLight = nullptr;
 	Camera* m_selectedCamera = nullptr;
 
-	//struct Light
-	//{
-	//	glm::vec3 direction;
-	//	glm::vec3 color;
-	//};
-	//Light				m_light;
-	//glm::vec3			m_ambientLight;
-	// Debug
-	float				m_debug = 0;
+	// Quaturions
+	glm::vec3 m_positions[2];
+	glm::quat m_rotations[2];
+
 public:
 	bool LoadShaderAndMeshLogic(Light a_light);
 	void DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::mat4 a_viewMatrix);

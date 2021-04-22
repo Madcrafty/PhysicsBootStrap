@@ -2,6 +2,7 @@
 #include <glm/ext.hpp>
 #include <Input.h>
 
+// Constructors
 Camera::Camera()
 {
 	m_position = glm::vec3(-10, 2, 0);
@@ -37,17 +38,23 @@ Camera::Camera(glm::vec3 a_position, float a_theta, float a_phi, bool a_dynamic,
 	m_name = a_name;
 }
 
+// This function is called every frame, updates the camera
 void Camera::Update(float a_deltaTime)
 {
+	// Static camera's don't update
 	if (m_dynamic)
 	{
+		// Dynamic camera's are updated
+		// Get inputs
 		aie::Input* input = aie::Input::getInstance();
+		// Convert angles to radians
 		float thetaR = glm::radians(m_theta);
 		float phiR = glm::radians(m_phi);
 		// Calculate the forward, right and up axis for the camera
 		glm::vec3 forward(glm::cos(phiR) * glm::cos(thetaR), glm::sin(phiR), glm::cos(phiR) * glm::sin(thetaR));
 		glm::vec3 right(-glm::sin(thetaR), 0, glm::cos(thetaR));
 		glm::vec3 up(0, 1, 0);
+		// Controles
 		if (input->isKeyDown(aie::INPUT_KEY_SPACE))
 		{
 			m_position += up * m_speed * a_deltaTime;
@@ -90,6 +97,7 @@ void Camera::Update(float a_deltaTime)
 	}
 }
 
+// returns the ViewMatrix of the camera
 glm::mat4 Camera::GetViewMatrix()
 {
 	float thetaR = glm::radians(m_theta);
@@ -99,6 +107,7 @@ glm::mat4 Camera::GetViewMatrix()
 	return glm::lookAt(m_position, m_position + forward, glm::vec3(0,1,0));
 }
 
+// returns the ProjectionMatrix of the camera
 glm::mat4 Camera::GetProjectionMatrix(float a_width, float a_height)
 {
 	return glm::perspective(glm::pi<float>() * 0.25f, a_width / a_height, 0.1f, 1000.f);

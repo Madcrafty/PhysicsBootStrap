@@ -3,10 +3,8 @@
 #include "Input.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include<glm/gtc/quaternion.hpp>
-#include<glm/gtx/quaternion.hpp>
-#include<glm/gtx/transform.hpp>
+
+
 #include<imgui.h>
 
 
@@ -33,9 +31,10 @@ bool SpearofDestinyApp::startup() {
 	// initialise gizmo primitive counts
 	Gizmos::create(10000, 10000, 10000, 10000);
 
-	// create simple camera transforms
-	//m_viewMatrix = glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
-	//m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth()/(float)getWindowHeight(), 0.1f, 1000.0f);
+	m_positions[0] = glm::vec3(10, 5, 10);
+	m_positions[1] = glm::vec3(-10, 0, -10);
+	m_rotations[0] = glm::quat(glm::vec3(0, -1, 0));
+	m_rotations[1] = glm::quat(glm::vec3(0, 1, 0));
 
 	Light light;
 	light.m_color = { 1,1,1 };
@@ -72,6 +71,23 @@ void SpearofDestinyApp::update(float deltaTime) {
 
 	// add a transform so that we can see the axis
 	Gizmos::addTransform(mat4(1));
+
+	// Quaturnion stuff
+	// use time to animate a alue between [0, 1]
+	float s = glm::cos(getTime()) * 0.5f + 0.5f;
+	
+	// standard linear interpolation
+	glm::vec3 p = (1.0f -s) * m_positions[0] + s* m_positions[1];
+	
+	// quaternion slerp
+	glm::quat r = glm::slerp(m_rotations[0], m_rotations[1], s);
+	
+	// build a matrix
+	glm::mat4 m = glm::translate(p) * glm::toMat4(r);
+	
+	// draw a transform and box
+	Gizmos::addTransform(m);
+	Gizmos::addAABBFilled(glm::vec3(0), glm::vec3(.5f), glm::vec4(1,0,0,1), &m);
 
 	// quit if we press escape
 	aie::Input* input = aie::Input::getInstance();
@@ -357,17 +373,21 @@ void SpearofDestinyApp::IMGUI_Logic()
 		float* row4[4] = { &selected[0][3].x, &selected[0][3].y, &selected[0][3].z, &selected[0][3].w };
 
 		//float* position[3] = { &selected[0][3].x, &selected[0][3].y, &selected[0][3].z };
-		float* position = &selected[0][3].x;
+		//float* position = &selected[0][3].x;
+		float f_position[3] = { m_selectedObject->GetPosition()->x, m_selectedObject->GetPosition()->y, m_selectedObject->GetPosition()->z };
+		//float rotation[3] = glm::rotation(1, 1, 1);
+		float f_rotation[3] = { m_selectedObject->GetRotation()->x, m_selectedObject->GetRotation()->y, m_selectedObject->GetRotation()->z };
 		// Scale values are not adjacent so it isn't correctly read with ImGui.
 		// Resorted to creating a tmp value to store the scale
-		float scale[3] = { selected[0][0].x, selected[0][1].y, selected[0][2].z };
+		//float scale[3] = { selected[0][0].x, selected[0][1].y, selected[0][2].z };
+		float f_scale[3] = { m_selectedObject->GetScale()->x, m_selectedObject->GetScale()->y, m_selectedObject->GetScale()->z };
 
 		// Quaturnions
-		glm::quat curRotation = glm::toQuat(*selected);
+		glm::quat quatRotation = glm::toQuat(*selected);
 		//glm::quat targetRotation = curRotation;
 		//float tmpTarget[4]{ targetRotation.x, targetRotation.y, targetRotation.z, targetRotation.w };
 
-		float tmpTarget[4]{ curRotation.x, curRotation.y, curRotation.z, curRotation.w };
+		//float tmpTarget[4]{ curRotation.x, curRotation.y, curRotation.z, curRotation.w };
 
 		ImGui::Text("Transform");
 		ImGui::DragFloat4(" ", *row1, 0.1f);
@@ -376,22 +396,28 @@ void SpearofDestinyApp::IMGUI_Logic()
 		ImGui::DragFloat4("    ", *row4, 0.1f);
 
 		ImGui::Text("Tools");
-		ImGui::DragFloat3("Position", position, 0.1f);
-		ImGui::DragFloat3("Scale", scale, 0.1f);
+		ImGui::DragFloat3("Position", f_position, 0.1f);
+		ImGui::DragFloat3("Rotation", f_rotation, 0.1f);
+		ImGui::DragFloat3("Scale", f_scale, 0.1f);
+
+		*m_selectedObject->GetPosition() = glm::vec3(f_position[0], f_position[1], f_position[2]);
+		*m_selectedObject->GetRotation() = glm::vec3(f_rotation[0], f_rotation[1], f_rotation[2]);
+		*m_selectedObject->GetScale() = glm::vec3(f_scale[0], f_scale[1], f_scale[2]);
 		// Updating transform scale
 		//selected[0][0].x = scale[0];
 		//selected[0][1].y = scale[1];
 		//selected[0][2].z = scale[2];
-		ImGui::DragFloat4("Rotation", tmpTarget, 0.1f);
+		
 
-		curRotation.x = tmpTarget[0];
-		curRotation.y = tmpTarget[1];
-		curRotation.z = tmpTarget[2];
+		//curRotation.x = tmpTarget[0];
+		//curRotation.y = tmpTarget[1];
+		//curRotation.z = tmpTarget[2];
 		//curRotation.w = tmpTarget[3];
 
-		glm::vec3 tmpPosition = glm::vec3(position[0], position[1], position[2]);
+		//glm::vec3 tmpPosition = glm::vec3(position[0], position[1], position[2]);
 		//glm::vec3 tmpScale = glm::vec3(scale[0], scale[1], scale[2]);
-		*selected = glm::translate(tmpPosition) * glm::toMat4(glm::normalize(curRotation));
+		//*selected = glm::translate(tmpPosition) * glm::toMat4(glm::normalize(curRotation));
+		m_selectedObject->RemakeTransform();
 
 		//ImGui::DragFloat("specularPower", &m_shotgunSpecPower, 0.05f);
 		ImGui::End();
@@ -411,93 +437,3 @@ void SpearofDestinyApp::IMGUI_Logic()
 		ImGui::End();
 	}
 }
-
-//void SpearofDestinyApp::DrawShaderAndMeshes(glm::mat4 a_projectionMatrix, glm::mat4 a_viewMatrix)
-//{
-//	auto pvm = a_projectionMatrix * a_viewMatrix * glm::mat4(0);
-//#pragma region Quad
-//	// Bind the shader
-//	m_textureShader.bind();
-//
-//	//Bind the transform of the mesh
-//	pvm = a_projectionMatrix * a_viewMatrix * m_quadTransform; // PVM = Projection View Matrix
-//	m_textureShader.bindUniform("ProjectionViewModel", pvm);
-//
-//	// Bind texture to a location of your choice (0)
-//	m_textureShader.bindUniform("diffuseTexture", 0);
-//
-//	m_gridTexture.bind(0);
-//
-//	m_quadMesh.Draw();
-//#pragma endregion
-//#pragma region FlatBunny
-//	// Bind the shader
-//	m_bunnyShader.bind();
-//	pvm = a_projectionMatrix * a_viewMatrix * m_bunnyTransform;
-//	m_bunnyShader.bindUniform("ProjectionViewModel", pvm);
-//
-//	// Bind texture to a location of your choice (0)
-//	m_bunnyShader.bindUniform("MeshFlatColor", glm::vec4(0,1,0,1));
-//
-//	// Draw bunny mesh
-//	//m_bunnyMesh.draw();
-//#pragma endregion
-//#pragma region Phong
-//	// Bind the shader
-//	m_phongShader.bind();
-//
-//	// Bind camera position
-//	m_phongShader.bindUniform("CameraPosition", m_camera.GetPosition());
-//
-//	// Bind the light
-//	m_phongShader.bindUniform("AmbientColor", m_ambientLight);
-//	m_phongShader.bindUniform("LightColor", m_light.color);
-//	m_phongShader.bindUniform("LightDirection", m_light.direction);
-//	
-//
-//	// Debug
-//	m_phongShader.bindUniform("Ns", m_debug);
-//	// Bind the PVM
-//	pvm = a_projectionMatrix * a_viewMatrix * m_bunnyTransform;
-//	m_phongShader.bindUniform("ProjectionViewModel", pvm);
-//
-//	// Bind the lighting transforms
-//	m_phongShader.bindUniform("ModelMatrix", m_bunnyTransform);
-//
-//	// Draw bunny mesh
-//	m_bunnyMesh.draw();
-//
-//	// Bind the PVM
-//	pvm = a_projectionMatrix * a_viewMatrix * m_dragoonTransform;
-//	m_phongShader.bindUniform("ProjectionViewModel", pvm);
-//
-//	// Bind the lighting transforms
-//	m_phongShader.bindUniform("ModelMatrix", m_dragoonTransform);
-//
-//	// Draw dragoon mesh
-//	m_dragoonMesh.draw();
-//#pragma endregion
-//	m_normalMapShader.bind();
-//	// Debug
-//	m_normalMapShader.bindUniform("Ns", m_debug);
-//	//Bind the transform of the mesh
-//	pvm = a_projectionMatrix * a_viewMatrix * m_spearTransform; // PVM = Projection View Matrix
-//	m_normalMapShader.bindUniform("ProjectionViewModel", pvm);
-//	m_normalMapShader.bindUniform("CameraPosition", m_camera.GetPosition());
-//	m_normalMapShader.bindUniform("AmbientColor", m_ambientLight);
-//	m_normalMapShader.bindUniform("LightColor", m_light.color);
-//	m_normalMapShader.bindUniform("LightDirection", m_light.direction);
-//	m_normalMapShader.bindUniform("ModelMatrix", m_spearTransform);
-//	//m_normalMapShader.bindUniform("Ns", m_debug);
-//
-//	// Bind texture to a location of your choice (0)
-//	//m_textureShader.bindUniform("diffuseTexture", 0);
-//
-//	m_spearMesh.draw();
-//
-//	pvm = a_projectionMatrix * a_viewMatrix * m_shotgunTransform; // PVM = Projection View Matrix
-//	m_normalMapShader.bindUniform("ProjectionViewModel", pvm);
-//	m_normalMapShader.bindUniform("ModelMatrix", m_shotgunTransform);
-//
-//	m_shotgunMesh.draw();
-//}
